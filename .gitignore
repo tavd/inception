@@ -1,0 +1,16 @@
+# secrets
+
+.env
+srcs/.env
+secrets/
+
+# certificates/private keys
+
+*.key
+*.crt
+
+# generated files
+
+*.log
+
+# Docker
