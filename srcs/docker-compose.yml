@@ -13,7 +13,8 @@ services:
 
     ports:
       - "443:443"
-
+    networks:
+      - inception
     volumes:
       - ./requirements/nginx/conf/:/etc/nginx/http.d/
       - ./requirements/nginx/tools:/etc/nginx/ssl/
@@ -35,11 +36,43 @@ services:
 
     ports:
       - "3306:3306"
-
+    networks:
+      - inception
     volumes:
       - db-volume:/var/lib/mysql
 
     restart: always
 
+  wordpress:
+    build:
+      context: .
+      dockerfile: requirements/wordpress/Dockerfile
+      args:
+        DB_NAME: ${DB_NAME}
+        DB_USER: ${DB_USER}
+        DB_PASS: ${DB_PASS}
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    restart: always
+    volumes:
+      - wp-volume:/var/www/
+
 volumes:
+  wp-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/wordpress
+
   db-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/mariadb
+
+networks:
+  inception:
+    driver: bridge
