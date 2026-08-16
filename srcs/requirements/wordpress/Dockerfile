@@ -3,7 +3,6 @@ FROM alpine:3.23
 ARG PHP_VERSION=85
 ARG DB_NAME
 ARG DB_USER
-ARG DB_PASS
 
 RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION} \
@@ -34,8 +33,10 @@ RUN wget https://wordpress.org/latest.zip && \
     cp -rf wordpress/* . && \
     rm -rf wordpress latest.zip
 
-COPY ./requirements/wordpress/conf/wp-config-create.sh .
+COPY ./requirements/wordpress/conf/wp-config-create.sh /usr/local/bin/wp-config-create.sh
+COPY ./requirements/wordpress/tools/wp.sh /usr/local/bin/wp.sh
 
-RUN sh wp-config-create.sh && \
-    rm wp-config-create.sh && \
+RUN chmod +x /usr/local/bin/wp-config-create.sh /usr/local/bin/wp.sh && \
     chmod -R 0777 wp-content/
+
+CMD ["/usr/local/bin/wp.sh"]

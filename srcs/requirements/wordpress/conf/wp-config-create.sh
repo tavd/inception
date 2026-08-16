@@ -1,7 +1,12 @@
 #!/bin/sh
 
+set -e
+
 if [ ! -f "/var/www/wp-config.php" ]; then
-cat << EOF > /var/www/wp-config.php
+
+    DB_PASS="$(cat /run/secrets/db_password)"
+
+    cat << EOF > /var/www/wp-config.php
 <?php
 define( 'DB_NAME', '${DB_NAME}' );
 define( 'DB_USER', '${DB_USER}' );
@@ -19,4 +24,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once ABSPATH . 'wp-settings.php';
 EOF
+
 fi

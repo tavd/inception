@@ -18,24 +18,20 @@ services:
     volumes:
       - ./requirements/nginx/conf/:/etc/nginx/http.d/
       - ./requirements/nginx/tools:/etc/nginx/ssl/
-      - /home/${USER}/simple_docker_nginx_html/public/html:/var/www/
-
+      - wp-volume:/var/www/
     restart: always
 
   mariadb:
     build:
       context: .
       dockerfile: requirements/mariadb/Dockerfile
-      args:
-        DB_NAME: ${DB_NAME}
-        DB_USER: ${DB_USER}
-        DB_PASS: ${DB_PASS}
-        DB_ROOT: ${DB_ROOT}
 
     container_name: mariadb
 
-    ports:
-      - "3306:3306"
+    secrets:
+      - db_password
+      - db_root_password
+
     networks:
       - inception
     volumes:
@@ -50,16 +46,22 @@ services:
       args:
         DB_NAME: ${DB_NAME}
         DB_USER: ${DB_USER}
-        DB_PASS: ${DB_PASS}
+
     container_name: wordpress
+
     depends_on:
       - mariadb
+
+    secrets:
+      - db_password
+
     networks:
       - inception
-    restart: always
-    volumes:
-      - wp-volume:/var/www/
 
+    restart: always
+
+    volumes:
+     - wp-volume:/var/www/
 volumes:
   wp-volume:
     driver_opts:
@@ -76,3 +78,10 @@ volumes:
 networks:
   inception:
     driver: bridge
+
+secrets:
+  db_password:
+    file: ../secrets/db_password.txt
+
+  db_root_password:
+    file: ../secrets/db_root_password.txt
