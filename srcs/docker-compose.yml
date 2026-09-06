@@ -8,8 +8,8 @@ services:
 
     container_name: nginx
 
-    # depends_on:
-    #   - wordpress
+    depends_on:
+      - wordpress
 
     ports:
       - "443:443"
@@ -44,9 +44,9 @@ services:
     build:
       context: .
       dockerfile: requirements/wordpress/Dockerfile
-      args:
-        DB_NAME: ${DB_NAME}
-        DB_USER: ${DB_USER}
+      # args:
+      #   DB_NAME: ${DB_NAME}
+      #   DB_USER: ${DB_USER}
 
     container_name: wordpress
 
