@@ -348,10 +348,3 @@ Troubleshooting configuration and runtime issues.
 Reviewing and explaining project files and commands.
 Checking understanding of the project architecture and helping identify possible configuration issues.
 AI was used as a support and explanation tool rather than as a replacement for understanding the project. The final configuration and implementation were tested in the project's Docker environment.
-—--
-No. Your specification does not require a project name/header at the top.
-It specifically requires that:
-The very first line must be italicized and read:
- This project has been created as part of the 42 curriculum by tavdiiev.
-So your README must begin exactly with:
-*This project has been created as part of the 42 curriculum by tavdiiev.*
