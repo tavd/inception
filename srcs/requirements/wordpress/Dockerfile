@@ -18,6 +18,8 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION}-zip \
     wget \
     unzip
+# RUN wget -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+#     chmod +x /usr/local/bin/wp
 RUN sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
     /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
     sed -i "s|;listen.owner = nobody|listen.owner = nobody|g" \
