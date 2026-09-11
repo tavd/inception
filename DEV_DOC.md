@@ -279,7 +279,7 @@ tavdiiev.42.fr
 
 The domain must resolve to the IP address through which the NGINX container can be reached.
 
-In a VM environment, configure the appropriate hosts/DNS entry so that:
+In a normal environment, configure the appropriate hosts/DNS entry so that:
 
 ```text
 tavdiiev.42.fr
@@ -310,6 +310,223 @@ and verify that:
 * NGINX uses port `443`;
 * the containers have restart policies;
 * no `network: host` or Docker links are used.
+
+---
+
+## School Environment and Browser Access
+
+The Inception project runs inside a Debian virtual machine.
+
+In the school environment, the host computer may not allow modification of the system `/etc/hosts` file. In that situation, the domain:
+
+```text
+tavdiiev.42.fr
+```
+
+cannot necessarily be resolved normally by the browser.
+
+A separate Chrome profile can be started with a temporary host-resolution rule that maps the project domain to the local machine.
+
+### Start Chrome with the project domain mapped locally
+
+From the host machine, use:
+
+```bash
+google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+
+This starts Chrome with a separate temporary profile and tells Chrome to resolve:
+
+```text
+tavdiiev.42.fr
+```
+
+to:
+
+```text
+127.0.0.1
+```
+
+This does not modify the system-wide hosts file.
+
+### Access the website
+
+When using the VirtualBox port forwarding configured for the school environment, open:
+
+```text
+https://tavdiiev.42.fr:8443/
+```
+
+The administrator area is:
+
+```text
+https://tavdiiev.42.fr:8443/wp-admin/
+```
+
+The `8443` port is the host-side VirtualBox forwarding port.
+
+The Inception NGINX container itself still listens on:
+
+```text
+443
+```
+
+The connection path is:
+
+```text
+School PC
+    │
+    │ https://tavdiiev.42.fr:8443/
+    ▼
+127.0.0.1:8443
+    │
+    │ VirtualBox port forwarding
+    ▼
+Debian VM :443
+    │
+    ▼
+NGINX :443
+    │
+    │ FastCGI :9000
+    ▼
+WordPress / PHP-FPM
+    │
+    │ MySQL :3306
+    ▼
+MariaDB
+```
+
+Therefore, `8443` is only the VirtualBox host-side forwarding port used to reach the VM from the school computer. The project's actual HTTPS entry point remains NGINX on port `443`.
+
+### Important distinction
+
+The following two ports have different purposes:
+
+```text
+443
+```
+
+is the HTTPS port used by NGINX inside the Inception infrastructure.
+
+```text
+8443
+```
+
+is the host-side VirtualBox forwarding port used to reach the VM from the school computer.
+
+The project itself must not be changed to use `8443` as its NGINX port merely because VirtualBox forwards the host's `8443` port to the VM's `443` port.
+
+---
+
+## Initial WordPress Installation
+
+When the project is started for the first time with empty persistent WordPress and MariaDB data, WordPress needs to be initialized.
+
+The exact first-start behavior should be verified in a clean clone/environment because existing persistent volumes can preserve an earlier WordPress installation.
+
+### 1. Start the infrastructure
+
+From the project root:
+
+```bash
+make
+```
+
+Check that the containers are running:
+
+```bash
+docker ps
+```
+
+The three project containers should be running:
+
+```text
+nginx
+wordpress
+mariadb
+```
+
+### 2. Start Chrome with the local domain mapping
+
+On the school host computer:
+
+```bash
+google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+
+### 3. Open the WordPress administrator URL
+
+Open:
+
+```text
+https://tavdiiev.42.fr:8443/wp-admin/
+```
+
+If the WordPress data is empty and the automatic WordPress configuration has not already completed the installation, the WordPress installation page should appear.
+
+The installation page can then be used to create the first WordPress administrator account.
+
+### 4. Create the WordPress administrator
+
+Create the administrator account using the WordPress installation form.
+
+The administrator username must comply with the Inception requirements.
+
+In particular, it must not contain:
+
+```text
+admin
+```
+
+or:
+
+```text
+administrator
+```
+
+including prohibited capitalization or equivalent variations.
+
+The WordPress administrator password should be stored securely.
+
+### 5. Log in to the WordPress dashboard
+
+After completing the installation, log in through:
+
+```text
+https://tavdiiev.42.fr:8443/wp-admin/
+```
+
+The WordPress dashboard should then be available.
+
+### 6. Create a normal WordPress user
+
+From the WordPress dashboard, create a second, normal user account if required for testing the two-user database requirement.
+
+The administrator account and normal user account should be separate accounts.
+
+### Important note about persistent volumes
+
+WordPress installation state is stored in the persistent volumes.
+
+If WordPress has already been initialized, visiting:
+
+```text
+https://tavdiiev.42.fr:8443/wp-admin/
+```
+
+will normally lead to the existing WordPress installation rather than displaying the initial installation form.
+
+Removing and recreating containers with:
+
+```bash
+make down
+```
+
+does not normally remove the persistent volumes.
+
+A completely fresh WordPress installation therefore requires intentionally resetting the persistent WordPress and MariaDB data.
+
+Do not remove the volumes merely to test the installation unless losing the existing database and website data is acceptable.
 
 ---
 
@@ -957,6 +1174,24 @@ docker logs nginx
 
 Also verify that the domain name resolves to the correct local/VM address.
 
+If the school host cannot use a normal `/etc/hosts` entry, use the Chrome workaround described in:
+
+```text
+School Environment and Browser Access
+```
+
+Start Chrome with:
+
+```bash
+google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+
+Then access:
+
+```text
+https://tavdiiev.42.fr:8443/
+```
+
 ### WordPress cannot connect to MariaDB
 
 Check that MariaDB is running:
@@ -1014,6 +1249,52 @@ Also check the NGINX configuration and its FastCGI destination:
 ```text
 wordpress:9000
 ```
+
+### WordPress installation page does not appear
+
+If expecting the initial WordPress installation page, first check whether the persistent WordPress and MariaDB volumes already contain data.
+
+Check the Docker volumes:
+
+```bash
+docker volume ls
+```
+
+Check the host data directory:
+
+```bash
+ls -la /home/tavd/data/
+```
+
+If WordPress has already been initialized, the existing installation will normally be used instead of displaying the installation form.
+
+Do not delete the volumes unless intentionally resetting the project.
+
+If testing a clean installation, the expected workflow is:
+
+```text
+Empty persistent data
+        │
+        ▼
+Start containers
+        │
+        ▼
+Open /wp-admin/
+        │
+        ▼
+WordPress installation page
+        │
+        ▼
+Create administrator
+        │
+        ▼
+Log in to dashboard
+        │
+        ▼
+Create normal user
+```
+
+The exact first-start behavior should be verified in a clean clone/environment before treating it as fully confirmed.
 
 ### Data appears to be missing
 
@@ -1107,7 +1388,27 @@ docker logs wordpress
 docker logs mariadb
 ```
 
-### 7. Make configuration or Dockerfile changes
+### 7. Access the website
+
+In the school environment, start Chrome with:
+
+```bash
+google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+
+Then open:
+
+```text
+https://tavdiiev.42.fr:8443/
+```
+
+The WordPress administrator area is:
+
+```text
+https://tavdiiev.42.fr:8443/wp-admin/
+```
+
+### 8. Make configuration or Dockerfile changes
 
 Edit the relevant files under:
 
@@ -1121,7 +1422,7 @@ and:
 srcs/requirements/
 ```
 
-### 8. Rebuild after Dockerfile changes
+### 9. Rebuild after Dockerfile changes
 
 ```bash
 make build
@@ -1133,7 +1434,7 @@ or:
 make re
 ```
 
-### 9. Stop the project when finished
+### 10. Stop the project when finished
 
 ```bash
 make down
@@ -1252,5 +1553,6 @@ Each container should run its actual service as its main process.
 | WordPress mount | `/var/www/` |
 | MariaDB mount | `/var/lib/mysql/` |
 | NGINX HTTPS | `443` |
+| School VirtualBox HTTPS | `8443` → VM `443` |
 | WordPress/PHP-FPM | `wordpress:9000` |
 | MariaDB | `mariadb:3306` |
