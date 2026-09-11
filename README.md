@@ -355,24 +355,3 @@ The very first line must be italicized and read:
  This project has been created as part of the 42 curriculum by tavdiiev.
 So your README must begin exactly with:
 *This project has been created as part of the 42 curriculum by tavdiiev.*
-You can put:
-# Inception
-on the next line, and that's perfectly fine, but it's an optional addition.
-The required structure is essentially:
-FIRST LINE: required italicized 42 sentence
-
-Description section
-Instructions section
-Resources section
-Project description section
-    - Docker and sources
-    - design choices
-    - VM vs Docker
-    - Secrets vs Environment Variables
-    - Docker Network vs Host Network
-    - Docker Volumes vs Bind Mounts
-So the other student's:
-# Inception
-is a presentation choice, not something your specification requires.
-—-----------
-
