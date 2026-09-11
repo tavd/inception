@@ -1,8 +1,8 @@
 FROM alpine:3.23
 
 ARG PHP_VERSION=85
-ARG DB_NAME
-ARG DB_USER
+# ARG DB_NAME
+# ARG DB_USER
 
 RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION} \
@@ -38,5 +38,5 @@ COPY ./requirements/wordpress/tools/wp.sh /usr/local/bin/wp.sh
 
 RUN chmod +x /usr/local/bin/wp-config-create.sh /usr/local/bin/wp.sh && \
     chmod -R 0777 wp-content/
-
+EXPOSE 9000
 CMD ["/usr/local/bin/wp.sh"]

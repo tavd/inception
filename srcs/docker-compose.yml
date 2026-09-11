@@ -28,6 +28,10 @@ services:
 
     container_name: mariadb
 
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+
     secrets:
       - db_password
       - db_root_password

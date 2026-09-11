@@ -2,8 +2,8 @@
 
 set -e
 
-DB_NAME="wordpress"
-DB_USER="wpuser"
+# DB_NAME="wordpress"
+# DB_USER="wpuser"
 
 DB_PASS="$(cat /run/secrets/db_password)"
 DB_ROOT="$(cat /run/secrets/db_root_password)"
