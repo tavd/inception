@@ -1,2330 +1,999 @@
-**# Inception — Developer Documentation**
+````markdown
+# Inception — Developer Documentation
 
-**## Overview**
+## Overview
 
-This project implements a small Docker-based infrastructure running WordPress with PHP-FPM, MariaDB, and NGINX.
+This document explains the internal structure, configuration, build process, networking, persistence, security, and development workflow of the Inception project.
 
-The infrastructure consists of three services:
+The project consists of three Docker services:
 
-* ****NGINX**** — the only public entry point. It handles HTTPS connections and forwards PHP requests to WordPress/PHP-FPM.
+- **NGINX** — public HTTPS entry point.
+- **WordPress/PHP-FPM** — application and PHP execution layer.
+- **MariaDB** — database layer.
 
-* ****WordPress with PHP-FPM**** — runs the WordPress application and processes PHP requests.
+The services communicate through a private Docker bridge network named `inception`.
 
-* ****MariaDB**** — stores the WordPress database.
-
-The services run in separate Docker containers and communicate through a private Docker network.
-
-The basic architecture is:
+The architecture is:
 
 ```text
-
 Browser
-
-│
-
-│ HTTPS :443
-
-▼
-
+   │
+   │ HTTPS :443
+   ▼
 NGINX
-
-│
-
-│ FastCGI :9000
-
-▼
-
+   │
+   │ FastCGI :9000
+   ▼
 WordPress / PHP-FPM
-
-│
-
-│ MySQL :3306
-
-▼
-
+   │
+   │ MySQL :3306
+   ▼
 MariaDB
-```
+````
 
-Only NGINX is exposed to the outside. WordPress/PHP-FPM and MariaDB are accessible internally through the Docker network.
+Only NGINX publishes a port. WordPress/PHP-FPM and MariaDB are internal services.
 
-The project must be run inside a virtual machine and uses Docker Compose to build and manage the infrastructure.
-
----
-
-**## Prerequisites**
-
-Before setting up the project, make sure the following are available inside the virtual machine:
-
-* A supported Linux distribution, such as Debian.
-
-* Docker.
-
-* Docker Compose.
-
-* Git.
-
-* `make`.
-
-* A shell such as `bash`.
-
-* Sufficient disk space for Docker images and persistent WordPress/MariaDB data.
-
-The project must be run inside a virtual machine as required by the Inception subject.
-
-**### Docker requirements**
-
-Docker must be running before using the Makefile.
-
-Check that Docker is available with:
-
-```bash
-
-docker --version
-```
-
-Check Docker Compose with:
-
-```bash
-
-docker compose version
-```
-
-Check that Docker is running:
-
-```bash
-
-docker info
-```
-
-If Docker is not running, start the Docker service using the appropriate command for the virtual machine's Linux distribution.
-
----
-
-**## Project Structure**
-
-The project has the following general structure:
+## Project Structure
 
 ```text
-
 inception/
-
 ├── Makefile
-
+├── README.md
+├── USER_DOC.md
+├── DEV_DOC.md
 ├── secrets/
-
 │   ├── db_password.txt
-
 │   ├── db_root_password.txt
-
 │   ├── wp_admin_password.txt
-
 │   └── wp_user_password.txt
-
 └── srcs/
-
-```
-├── .env
-
-├── docker-compose.yml
-
-└── requirements/
-
-    ├── mariadb/
-
-    │   ├── Dockerfile
-
-    │   ├── conf/
-
-    │   └── tools/
-
-    ├── nginx/
-
-    │   ├── Dockerfile
-
-    │   ├── conf/
-
-    │   └── tools/
-
-    ├── wordpress/
-
-    │   ├── Dockerfile
-
-    │   ├── conf/
-
-    │   └── tools/
-
-    └── tools/
+    ├── .env
+    ├── docker-compose.yml
+    └── requirements/
+        ├── nginx/
+        │   ├── Dockerfile
+        │   ├── conf/
+        │   │   └── nginx.conf
+        │   └── tools/
+        │       ├── tavdiiev.42.fr.crt
+        │       └── tavdiiev.42.fr.key
+        │
+        ├── wordpress/
+        │   ├── Dockerfile
+        │   ├── conf/
+        │   │   └── wp-config-create.sh
+        │   └── tools/
+        │       └── wp.sh
+        │
+        └── mariadb/
+            ├── Dockerfile
+            ├── conf/
+            │   └── create_db.sh
+            └── tools/
+                └── db.sh
 ```
 
-```
+The `.env`, secret files, certificate, and private key are local environment-specific files and are excluded from Git.
 
-The exact contents of the `conf/` and `tools/` directories depend on the implementation of each service.
+## Prerequisites
 
-**### Makefile**
+The development environment requires:
 
-The `Makefile` provides the main commands used to build, start, stop, and rebuild the infrastructure.
+* Docker
+* Docker Compose
+* Git
+* Bash
+* A Linux environment capable of running Docker
 
-**### `srcs/docker-compose.yml`**
+The current project uses Alpine Linux 3.23 as the base image for all three services.
 
-This file defines:
+## Setting Up Environment From Scratch
 
-* the three services;
-
-* the Docker network;
-
-* the persistent named volumes;
-
-* build configurations;
-
-* environment variables;
-
-* Docker secrets;
-
-* service dependencies;
-
-* restart policies;
-
-* exposed ports.
-
-**### `srcs/.env`**
-
-The `.env` file contains non-secret environment variables used by Docker Compose and the service configuration.
-
-For example:
-
-```text
-
-DOMAIN_NAME=tavdiiev.42.fr
-```
-
-Other project-specific variables such as the MariaDB database name, database username, WordPress title, WordPress usernames, email addresses, and WordPress URL are also configured through environment variables.
-
-The WordPress URL should remain:
-
-```text
-
-WP_URL=https://tavdiiev.42.fr
-```
-
-The VirtualBox forwarding port `8443` must not be added to `WP_URL`. The project itself uses HTTPS on NGINX port `443`; `8443` is only used as a host-side forwarding port in the school environment.
-
-Passwords and other confidential information must not be placed directly in this file when they are handled through Docker secrets.
-
-**### `secrets/`**
-
-The `secrets/` directory contains confidential information required by MariaDB and WordPress.
-
-The project uses:
-
-```text
-
-secrets/db_password.txt
-secrets/db_root_password.txt
-secrets/wp_admin_password.txt
-secrets/wp_user_password.txt
-```
-
-Their purposes are:
-
-* `db_password.txt` — password for the WordPress MariaDB user.
-
-* `db_root_password.txt` — MariaDB root password.
-
-* `wp_admin_password.txt` — password for the automatically created WordPress administrator.
-
-* `wp_user_password.txt` — password for the automatically created normal WordPress user.
-
-These files must remain local and must not be committed to Git.
-
----
-
-**## Setting Up the Environment From Scratch**
-
-**### 1. Start the virtual machine**
-
-Start the Linux virtual machine used for the Inception project.
-
-Open a terminal and make sure you are working inside the project directory.
-
-For example:
+### Clone the repository
 
 ```bash
-
-cd ~/inception
-```
-
-**### 2. Clone or copy the project**
-
-If the project is stored in a Git repository, clone it into the virtual machine:
-
-```bash
-
-git clone <repository>
-
+git clone <repository-url>
 cd inception
 ```
 
-Do not commit passwords, credentials, API keys, or other confidential information to the repository.
+### Create the local `.env`
 
-Because `.env`, secrets, certificates, and private keys are ignored by Git, these files must be created or supplied locally after cloning.
-
-**### 3. Check the directory structure**
-
-From the project root:
-
-```bash
-
-ls -la
-```
-
-The project should contain at least:
+The Makefile expects:
 
 ```text
-
-Makefile
-
-secrets/
-
-srcs/
+srcs/.env
 ```
 
-Check the `srcs` directory:
+A typical configuration is:
 
-```bash
-
-ls -la srcs
-```
-
-It should contain:
-
-```text
-
-.env
-
-docker-compose.yml
-
-requirements/
-```
-
-The `.env` file is intentionally not committed to the repository, so it must be created locally if it is not already present.
-
-**### 4. Create the secrets**
-
-Create the database password secret:
-
-```bash
-
-nano secrets/db_password.txt
-```
-
-Enter the password that will be used by the WordPress database user.
-
-Create the MariaDB root password secret:
-
-```bash
-
-nano secrets/db_root_password.txt
-```
-
-Enter the MariaDB root password.
-
-Create the WordPress administrator password secret:
-
-```bash
-
-nano secrets/wp_admin_password.txt
-```
-
-Enter the password that should be used for the automatically created WordPress administrator.
-
-Create the normal WordPress user password secret:
-
-```bash
-
-nano secrets/wp_user_password.txt
-```
-
-Enter the password that should be used for the automatically created normal WordPress user.
-
-The secret files should contain the passwords only, without unnecessary configuration syntax.
-
-For example:
-
-```text
-
-my_database_password
-```
-
-and:
-
-```text
-
-my_root_password
-```
-
-The actual passwords must never be placed in the Dockerfiles or committed to Git.
-
-**### 5. Configure the `.env` file**
-
-Edit:
-
-```bash
-
-nano srcs/.env
-```
-
-The `.env` file contains the environment variables required by the Docker Compose configuration.
-
-For this project, the configuration includes values such as:
-
-```text
-
+```env
 DOMAIN_NAME=tavdiiev.42.fr
+CERT_=./requirements/tools/tavdiiev.42.fr.crt
+KEY_=./requirements/tools/tavdiiev.42.fr.key
 DB_NAME=wordpress
 DB_USER=wpuser
 WP_TITLE=Inception
 WP_ADMIN_USER=tavd_user1
-WP_ADMIN_EMAIL=[some_email@gmail.com](mailto:some_email@gmail.com)
+WP_ADMIN_EMAIL=some_email@gmail.com
 WP_USER=tavd_user2
-WP_USER_EMAIL=[some_email2@gmail.com](mailto:some_email2@gmail.com)
+WP_USER_EMAIL=some_email2@gmail.com
 WP_URL=https://tavdiiev.42.fr
 ```
 
-The actual email addresses and other project-specific values can be changed as required.
+`WP_URL` must remain the canonical project URL without `:8443`.
 
-Passwords should be provided through Docker secrets rather than hard-coded into Dockerfiles or Compose configuration.
+Port `8443` is only used by the school VirtualBox environment as a host-side forwarding port.
 
-The WordPress administrator username must not contain `admin` or `administrator`, including prohibited capitalization or equivalent variations.
+### Create the secrets
 
-**### 6. Configure the domain name**
-
-The project domain must follow the required format:
+The project expects four secret files:
 
 ```text
-
-<login>.42.fr
+secrets/
+├── db_password.txt
+├── db_root_password.txt
+├── wp_admin_password.txt
+└── wp_user_password.txt
 ```
 
-For this project:
+Their purposes are:
+
+* `db_password.txt` — password for the MariaDB database user used by WordPress.
+* `db_root_password.txt` — MariaDB root password.
+* `wp_admin_password.txt` — WordPress administrator password.
+* `wp_user_password.txt` — normal/subscriber WordPress user password.
+
+The files contain sensitive information and must not be committed to Git.
+
+### TLS certificate and key
+
+NGINX expects the certificate and private key at:
 
 ```text
-
-tavdiiev.42.fr
+srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
+srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
 
-The domain must resolve to the IP address through which the NGINX container can be reached.
+These files are local environment-specific files and are excluded from Git.
 
-Inside the virtual machine, a hosts entry can be used so that:
+## School Environment and Browser Access
+
+The project itself uses:
 
 ```text
-
-tavdiiev.42.fr
-```
-
-resolves to the local machine.
-
-In the school environment, the host computer may have restrictions preventing modification of its system `/etc/hosts` file. See the **School Environment and Browser Access** section for the corresponding workaround.
-
-**### 7. Check the Docker configuration**
-
-Before building the project, inspect:
-
-```text
-
-srcs/docker-compose.yml
-```
-
-and verify that:
-
-* all three services are defined;
-
-* each service has its own Dockerfile;
-
-* the services use the required build contexts;
-
-* the `inception` network is defined;
-
-* the two persistent named volumes are defined;
-
-* Docker secrets are configured;
-
-* environment variables are loaded from `.env`;
-
-* NGINX is the only service exposed externally;
-
-* NGINX uses port `443`;
-
-* the containers have restart policies;
-
-* no `network: host` or Docker links are used.
-
----
-
-**## School Environment and Browser Access**
-
-The Inception project runs inside a Debian virtual machine.
-
-In the school environment, the host computer may not allow modification of the system `/etc/hosts` file. In that situation, the domain:
-
-```text
-
-tavdiiev.42.fr
-```
-
-cannot necessarily be resolved normally by the browser.
-
-A separate Chrome profile can be started with a temporary host-resolution rule that maps the project domain to the local machine.
-
-**### Start Chrome with the project domain mapped locally**
-
-From the host machine, use:
-
-```bash
-
-google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
-```
-
-This starts Chrome with a separate temporary profile and tells Chrome to resolve:
-
-```text
-
-tavdiiev.42.fr
-```
-
-to:
-
-```text
-
-127.0.0.1
-```
-
-This does not modify the system-wide hosts file.
-
-**### Important distinction between ports 443 and 8443**
-
-The project itself uses NGINX on port:
-
-```text
-
-443
-```
-
-The school VirtualBox configuration forwards the host computer's:
-
-```text
-
-127.0.0.1:8443
-```
-
-to the virtual machine's:
-
-```text
-
-443
-```
-
-Therefore:
-
-```text
-
-8443
-```
-
-is only a host-side VirtualBox forwarding port.
-
-It is **not** the HTTPS port used by NGINX inside the Inception infrastructure.
-
-The project URL remains:
-
-```text
-
-https://tavdiiev.42.fr
-```
-
-and the `.env` file should contain:
-
-```text
-
-WP_URL=https://tavdiiev.42.fr
-```
-
-not:
-
-```text
-
-WP_URL=https://tavdiiev.42.fr:8443
-```
-
-The connection path is:
-
-```text
-
-School PC
-
-```
-│
-
-│ 127.0.0.1:8443
-
-▼
-```
-
-VirtualBox port forwarding
-
-```
-│
-
-│ VM :443
-
-▼
-```
-
 NGINX :443
-
-```
-│
-
-│ FastCGI :9000
-
-▼
+WP_URL=https://tavdiiev.42.fr
 ```
 
-WordPress / PHP-FPM
-
-```
-│
-
-│ MySQL :3306
-
-▼
-```
-
-MariaDB
-```
-
-**### Testing from the school host**
-
-Because WordPress uses the canonical URL:
+In the school VM setup, VirtualBox forwards:
 
 ```text
-
-https://tavdiiev.42.fr
+Host 127.0.0.1:8443 → VM 443
 ```
 
-a browser request through:
+Therefore `8443` is not part of the project's actual NGINX or WordPress configuration.
+
+The VM resolves the domain locally:
 
 ```text
-
-https://tavdiiev.42.fr:8443/
+127.0.0.1    localhost tavdiiev.42.fr
 ```
 
-can be redirected by WordPress to the canonical HTTPS URL without `:8443`.
-
-For a clean test that does not require changing the WordPress canonical URL, use `curl` from the school host:
+When testing from the school host, the recommended clean test is:
 
 ```bash
-
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
 ```
 
-A successful response should look similar to:
+A successful response such as:
 
 ```text
-
 HTTP/1.1 200 OK
-Server: nginx
-Content-Type: text/html; charset=UTF-8
 ```
 
-This verifies the path:
+confirms the path:
 
 ```text
-
-school host
-↓
-127.0.0.1:8443
-↓
+School host
+    │
+    │ 127.0.0.1:8443
+    ▼
 VirtualBox
-↓
-VM :443
-↓
+    │
+    │ VM :443
+    ▼
 NGINX
-↓
+    │
+    ▼
 WordPress
 ```
 
-while keeping the project's canonical URL correct.
-
-**### Browser testing through port 8443**
-
-If a browser test through `8443` is specifically required, WordPress's `home` and `siteurl` options can temporarily be changed to include `:8443`.
-
-For example:
-
-```bash
-
-docker exec wordpress wp option update home 'https://tavdiiev.42.fr:8443' --allow-root
-
-docker exec wordpress wp option update siteurl 'https://tavdiiev.42.fr:8443' --allow-root
-```
-
-The browser can then be opened at:
+A browser request to:
 
 ```text
-
 https://tavdiiev.42.fr:8443/
 ```
 
-or:
+may be redirected by WordPress to the canonical URL:
 
 ```text
-
-https://tavdiiev.42.fr:8443/wp-admin/
+https://tavdiiev.42.fr/
 ```
 
-After browser testing, restore the project's actual canonical URL:
+because the stored `home` and `siteurl` values do not contain `:8443`.
 
-```bash
-
-docker exec wordpress wp option update home 'https://tavdiiev.42.fr' --allow-root
-
-docker exec wordpress wp option update siteurl 'https://tavdiiev.42.fr' --allow-root
-```
-
-Verify:
-
-```bash
-
-docker exec wordpress wp option get home --allow-root
-
-docker exec wordpress wp option get siteurl --allow-root
-```
-
-The final project configuration should use:
+If browser testing specifically through `8443` is required, the `home` and `siteurl` WordPress options can temporarily be changed to include `:8443`. They should then be restored to:
 
 ```text
-
 https://tavdiiev.42.fr
 ```
 
-without `:8443`.
+Do not put `:8443` into the final `WP_URL`.
 
----
+## Initial WordPress Installation
 
-**## Automatic WordPress Installation**
+WordPress installation is automated.
 
-WordPress installation is automated by the WordPress container using WP-CLI.
-
-The project does not require manually opening the WordPress installation page and entering the administrator and normal-user information through the browser.
-
-The required WordPress credentials are supplied through Docker secrets and the non-secret configuration is supplied through `.env`.
-
-**### 1. Start the infrastructure**
-
-From the project root:
-
-```bash
-
-make
-```
-
-The Makefile builds/starts the Docker Compose infrastructure.
-
-Check that the containers are running:
-
-```bash
-
-docker ps
-```
-
-The three project containers should be running:
+The WordPress container starts with:
 
 ```text
-
-nginx
-
-wordpress
-
-mariadb
+/usr/local/bin/wp.sh
 ```
 
-**### 2. WordPress startup process**
+The script performs the following operations:
 
-When the WordPress container starts, its startup script performs the following steps:
+1. Runs `wp-config-create.sh`.
+2. Waits until MariaDB accepts a connection.
+3. Checks whether WordPress is already installed.
+4. If WordPress is not installed, runs `wp core install`.
+5. Creates the configured normal/subscriber user with `wp user create`.
+6. Starts PHP-FPM in the foreground.
 
-```text
-
-Start WordPress container
-│
-▼
-Create wp-config.php if necessary
-│
-▼
-Wait for MariaDB to become available
-│
-▼
-Check whether WordPress is installed
-│
-├── Already installed
-│       │
-│       ▼
-│   Skip installation
-│
-└── Not installed
-│
-▼
-Run wp core install
-│
-▼
-Create normal WordPress user
-│
-▼
-Start PHP-FPM
-```
-
-The startup script first runs the WordPress configuration script.
-
-If `/var/www/wp-config.php` does not exist, it is generated using the database configuration and the database password stored in the Docker secret.
-
-The WordPress container then waits until MariaDB accepts a connection.
-
-**### 3. Automatic WordPress installation**
-
-On a clean WordPress data directory, WP-CLI checks:
-
-```bash
-
-wp core is-installed --allow-root
-```
-
-If WordPress is not installed, the startup script runs:
+The relevant logic is:
 
 ```text
-
-wp core install
+wp.sh
+  │
+  ├── wp-config-create.sh
+  │
+  ├── wait for MariaDB
+  │
+  ├── wp core is-installed
+  │
+  ├── if not installed:
+  │      ├── wp core install
+  │      └── wp user create
+  │
+  └── php-fpm85 -F
 ```
 
-using:
-
-* `WP_URL` from `.env`;
-
-* `WP_TITLE` from `.env`;
-
-* `WP_ADMIN_USER` from `.env`;
-
-* `WP_ADMIN_EMAIL` from `.env`;
-
-* the administrator password from `secrets/wp_admin_password.txt`.
-
-The installation uses `--skip-email` because email configuration is not required for the local Inception installation.
-
-After installing WordPress, the startup script creates the normal user using:
-
-* `WP_USER` from `.env`;
-
-* `WP_USER_EMAIL` from `.env`;
-
-* the password from `secrets/wp_user_password.txt`;
-
-* the `subscriber` role.
-
-**### 4. Verify the installation**
-
-Check whether WordPress is installed:
-
-```bash
-
-docker exec wordpress wp core is-installed --allow-root
-```
-
-A successful command exits without an error.
-
-Check the WordPress version:
-
-```bash
-
-docker exec wordpress wp core version --allow-root
-```
-
-List the WordPress users:
-
-```bash
-
-docker exec wordpress wp user list --allow-root
-```
-
-The expected users are:
+The administrator password is read from:
 
 ```text
-
-tavd_user1
-tavd_user2
+/run/secrets/wp_admin_password
 ```
 
-with the administrator and subscriber roles respectively.
-
-**### 5. Check the WordPress startup logs**
-
-The WordPress logs can be viewed with:
-
-```bash
-
-docker logs wordpress
-```
-
-On a clean installation, the logs should contain messages similar to:
+The normal user password is read from:
 
 ```text
-
-Waiting for MariaDB...
-WordPress is not installed. Installing...
-Success: WordPress installed successfully.
-Success: Created user 2.
+/run/secrets/wp_user_password
 ```
-
-On a subsequent container start where the persistent WordPress installation already exists, the installation should be skipped and the logs should contain:
-
-```text
-
-WordPress is already installed.
-```
-
-**### Important note about persistent data**
-
-The WordPress installation state is stored in the persistent WordPress and MariaDB data.
-
-If WordPress has already been initialized, restarting or recreating the containers will normally keep the existing installation.
-
-For example:
-
-```bash
-
-make down
-```
-
-does not normally remove the persistent volumes.
-
-Therefore, a completely fresh automatic installation test requires intentionally resetting the persistent WordPress and MariaDB data.
-
-Do not remove the persistent data merely to test the installation unless losing the existing database and website data is acceptable.
-
----
-
-**## Building the Project**
-
-The project images are built from the project's own Dockerfiles.
-
-Ready-made application images must not be pulled for the project services.
-
-The base images are based on the required Alpine version used by the project implementation.
-
-From the project root, build and start the infrastructure with:
-
-```bash
-
-make
-```
-
-If the images need to be explicitly rebuilt, use:
-
-```bash
-
-make build
-```
-
-The Makefile invokes Docker Compose, which builds the Dockerfiles for:
-
-```text
-
-nginx
-
-wordpress
-
-mariadb
-```
-
-The resulting Docker images correspond to the project services.
-
-**### Check the built images**
-
-Use:
-
-```bash
-
-docker images
-```
-
-or:
-
-```bash
-
-docker image ls
-```
-
-This can be used to verify that the project images have been created.
-
----
-
-**## Launching the Project**
-
-The normal way to launch the infrastructure is:
-
-```bash
-
-make
-```
-
-The Makefile starts Docker Compose in detached mode.
-
-After starting the project, check the containers:
-
-```bash
-
-docker ps
-```
-
-The three project containers should be running:
-
-```text
-
-nginx
-
-wordpress
-
-mariadb
-```
-
-The containers should restart automatically if they stop because of a crash, according to the restart policy configured in `docker-compose.yml`.
-
----
-
-**## Checking the Docker Network**
-
-The three services communicate through the project's private Docker network.
-
-List Docker networks:
-
-```bash
-
-docker network ls
-```
-
-The project network is:
-
-```text
-
-inception
-```
-
-Inspect the network:
-
-```bash
-
-docker network inspect inception
-```
-
-The NGINX, WordPress, and MariaDB containers should be connected to this network.
-
-Service names are used for communication between containers.
-
-For example, NGINX forwards PHP requests to:
-
-```text
-
-wordpress:9000
-```
-
-WordPress connects to MariaDB through:
-
-```text
-
-mariadb:3306
-```
-
-The containers do not need to communicate through host IP addresses.
-
----
-
-**## Managing Containers**
-
-**### Check running containers**
-
-```bash
-
-docker ps
-```
-
-**### Check all containers**
-
-To include stopped containers:
-
-```bash
-
-docker ps -a
-```
-
-**### View container logs**
-
-NGINX:
-
-```bash
-
-docker logs nginx
-```
-
-WordPress:
-
-```bash
-
-docker logs wordpress
-```
-
-MariaDB:
-
-```bash
-
-docker logs mariadb
-```
-
-To follow logs continuously:
-
-```bash
-
-docker logs -f nginx
-```
-
-or:
-
-```bash
-
-docker logs -f wordpress
-```
-
-or:
-
-```bash
-
-docker logs -f mariadb
-```
-
-Press `Ctrl + C` to stop following the logs.
-
-**### Inspect a container**
-
-NGINX:
-
-```bash
-
-docker inspect nginx
-```
-
-WordPress:
-
-```bash
-
-docker inspect wordpress
-```
-
-MariaDB:
-
-```bash
-
-docker inspect mariadb
-```
-
-These commands can be useful for checking:
-
-* container state;
-
-* network configuration;
-
-* mounts;
-
-* environment configuration;
-
-* restart policies;
-
-* other Docker configuration.
-
-**### Open a shell inside a container**
-
-When troubleshooting, a shell can be opened inside a running container if the required shell is available.
-
-For example:
-
-```bash
-
-docker exec -it nginx sh
-```
-
-or:
-
-```bash
-
-docker exec -it wordpress sh
-```
-
-or:
-
-```bash
-
-docker exec -it mariadb sh
-```
-
-Use `exit` to leave the container shell.
-
----
-
-**## Managing the Project With the Makefile**
-
-The Makefile is the preferred way to manage the project.
-
-**### Start the project**
-
-```bash
-
-make
-```
-
-**### Build the project**
-
-```bash
-
-make build
-```
-
-This rebuilds the Docker images and starts the infrastructure according to the Makefile.
-
-**### Stop the project**
-
-```bash
-
-make down
-```
-
-This stops and removes the Docker Compose containers and network.
-
-The persistent named volumes are normally kept.
-
-**### Rebuild the project**
-
-```bash
-
-make re
-```
-
-This target is used to rebuild/recreate the project according to the Makefile configuration.
-
-The exact sequence is defined by the project's Makefile.
-
----
-
-**## Managing Docker Compose Directly**
-
-Docker Compose can also be used directly from the `srcs` directory when troubleshooting or inspecting the configuration.
-
-For example:
-
-```bash
-
-cd srcs
-```
-
-Then:
-
-```bash
-
-docker compose up -d
-```
-
-To rebuild the images:
-
-```bash
-
-docker compose up -d --build
-```
-
-To stop the Compose project:
-
-```bash
-
-docker compose down
-```
-
-The Makefile should normally be preferred because it provides the project's intended workflow.
-
----
-
-**## Managing Volumes**
-
-The project defines two Docker named volumes for persistent storage:
-
-* `wp-volume` for WordPress files.
-
-* `db-volume` for MariaDB database files.
-
-These are **named Docker volumes** whose storage is backed by the required host directories under:
-
-```text
-
-/home/${USER}/data/
-```
-
-through the volume driver's bind configuration.
-
-List Docker volumes:
-
-```bash
-
-docker volume ls
-```
-
-Inspect a volume:
-
-```bash
-
-docker volume inspect <volume_name>
-```
-
-The volumes are mounted inside the containers at:
-
-```text
-
-/var/www/
-```
-
-for WordPress files, and:
-
-```text
-
-/var/lib/mysql/
-```
-
-for MariaDB data.
-
-**### Important: Do Not Remove the Volumes Accidentally**
-
-The persistent data must survive normal container recreation.
-
-Do not use:
-
-```bash
-
-docker compose down -v
-```
-
-unless you intentionally want to remove the project's named volumes.
-
-Likewise, do not manually delete the host data directories unless the intention is to completely reset the project.
-
-Removing the MariaDB volume/data can permanently remove:
-
-* the WordPress database;
-
-* WordPress users;
-
-* WordPress settings;
-
-* other stored database information.
-
----
-
-**## Persistent Data**
-
-The project defines named Docker volumes:
-
-```text
-
-wp-volume
-
-db-volume
-```
-
-Their storage is backed by the following host directories:
-
-```text
-
-/home/tavd/data/
-
-├── wordpress/
-
-└── mariadb/
-```
-
-The corresponding container locations are:
-
-```text
-
-WordPress volume
-
-```
-↓
-```
-
-/var/www/
-
-MariaDB volume
-
-```
-↓
-```
-
-/var/lib/mysql/
-```
-
-This allows the application containers to be recreated without losing the persistent data stored in the volumes.
-
-**### WordPress data**
-
-WordPress website files are stored persistently in the WordPress volume.
-
-Inside the WordPress container, the volume is mounted at:
-
-```text
-
-/var/www/
-```
-
-**### MariaDB data**
-
-The MariaDB database files are stored persistently in the MariaDB volume.
-
-Inside the MariaDB container, the volume is mounted at:
-
-```text
-
-/var/lib/mysql/
-```
-
-**### Check the host data**
-
-On the host VM:
-
-```bash
-
-ls -la /home/tavd/data/
-```
-
-Check WordPress data:
-
-```bash
-
-ls -la /home/tavd/data/wordpress/
-```
-
-Check MariaDB data:
-
-```bash
-
-ls -la /home/tavd/data/mariadb/
-```
-
-The exact contents are managed by Docker and the services.
-
----
-
-**## NGINX Configuration**
-
-NGINX is the only externally accessible service.
-
-The infrastructure exposes HTTPS through:
-
-```text
-
-443
-```
-
-NGINX is configured to use TLS.
-
-Only:
-
-```text
-
-TLSv1.2
-
-TLSv1.3
-```
-
-are permitted.
-
-NGINX receives browser requests and forwards PHP requests to the WordPress container using FastCGI:
-
-```text
-
-wordpress:9000
-```
-
-MariaDB is not exposed publicly.
-
-WordPress/PHP-FPM is not exposed publicly.
-
-The intended traffic flow is:
-
-```text
-
-Browser
-
-│
-
-│ HTTPS :443
-
-▼
-
-NGINX
-
-│
-
-│ FastCGI :9000
-
-▼
-
-WordPress / PHP-FPM
-
-│
-
-│ MySQL :3306
-
-▼
-
-MariaDB
-```
-
----
-
-**## WordPress Configuration**
-
-The WordPress container contains WordPress and PHP-FPM.
-
-NGINX is not installed in the WordPress container.
-
-The WordPress container communicates with MariaDB through the Docker network.
-
-The database host is the MariaDB service name:
-
-```text
-
-mariadb
-```
-
-The database connection uses the internal MariaDB port:
-
-```text
-
-3306
-```
-
-PHP-FPM listens on:
-
-```text
-
-9000
-```
-
-WordPress files are stored in the persistent WordPress volume.
-
-**### WordPress configuration and WP-CLI**
-
-The WordPress container uses:
-
-```text
-
-/usr/local/bin/wp-config-create.sh
-```
-
-to create `wp-config.php` when it does not already exist.
 
 The database password is read from:
 
 ```text
-
 /run/secrets/db_password
 ```
 
-The WordPress startup script:
+### First installation
+
+On empty WordPress data, the logs should contain messages similar to:
 
 ```text
-
-/usr/local/bin/wp.sh
-```
-
-then waits for MariaDB and checks whether WordPress has already been installed.
-
-WP-CLI is used to perform the initial installation automatically when necessary.
-
----
-
-**## MariaDB Configuration**
-
-MariaDB runs in its own dedicated container.
-
-NGINX and WordPress are not installed in the MariaDB container.
-
-The database data is stored in the persistent MariaDB volume.
-
-MariaDB uses the credentials supplied through the configured Docker secrets and environment variables.
-
-The database must contain the required WordPress users, including an administrator account whose username does not contain:
-
-```text
-
-admin
-administrator
-```
-
-or equivalent capitalization/variations prohibited by the project requirements.
-
----
-
-**## Docker Secrets and Security**
-
-Passwords must not be placed directly in Dockerfiles.
-
-The project uses Docker secrets for sensitive MariaDB and WordPress passwords.
-
-The secret files are:
-
-```text
-
-secrets/db_password.txt
-secrets/db_root_password.txt
-secrets/wp_admin_password.txt
-secrets/wp_user_password.txt
-```
-
-These files must remain local.
-
-They must not be committed to Git.
-
-Check the repository before committing:
-
-```bash
-
-git status
-```
-
-If necessary, verify that the secret files are ignored:
-
-```bash
-
-git check-ignore secrets/db_password.txt
-
-git check-ignore secrets/db_root_password.txt
-
-git check-ignore secrets/wp_admin_password.txt
-
-git check-ignore secrets/wp_user_password.txt
-```
-
-The project must never contain publicly stored:
-
-* passwords;
-
-* database credentials;
-
-* API keys;
-
-* other confidential credentials.
-
-The `.env` file should also be handled according to the project's Git configuration and must not contain confidential values that should instead be stored as secrets.
-
----
-
-**## Rebuilding After Configuration Changes**
-
-When a Dockerfile or build configuration changes, rebuild the images:
-
-```bash
-
-make build
-```
-
-If a complete project recreation is required, use the Makefile's rebuild target:
-
-```bash
-
-make re
-```
-
-After rebuilding, verify that the containers are running:
-
-```bash
-
-docker ps
-```
-
-Check the logs if a service does not start:
-
-```bash
-
-docker logs nginx
-
-docker logs wordpress
-
-docker logs mariadb
-```
-
----
-
-**## Troubleshooting**
-
-**### Containers are not running**
-
-Check:
-
-```bash
-
-docker ps -a
-```
-
-Then inspect the logs:
-
-```bash
-
-docker logs nginx
-
-docker logs wordpress
-
-docker logs mariadb
-```
-
-**### NGINX is not accessible**
-
-Check that the NGINX container is running:
-
-```bash
-
-docker ps
-```
-
-Check the port:
-
-```bash
-
-docker port nginx
-```
-
-Check the NGINX logs:
-
-```bash
-
-docker logs nginx
-```
-
-From inside the VM, test the HTTPS endpoint directly:
-
-```bash
-
-curl -kI https://tavdiiev.42.fr/
-```
-
-A successful response should return an HTTP status such as:
-
-```text
-
-HTTP/1.1 200 OK
-```
-
-If testing from the school host, use:
-
-```bash
-
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-
-This uses the school VirtualBox forwarding port while explicitly supplying the required hostname.
-
-If the school host cannot use a normal `/etc/hosts` entry, use the Chrome workaround described in **School Environment and Browser Access**.
-
-**### WordPress cannot connect to MariaDB**
-
-Check that MariaDB is running:
-
-```bash
-
-docker ps
-```
-
-Check MariaDB logs:
-
-```bash
-
-docker logs mariadb
-```
-
-Check the Docker network:
-
-```bash
-
-docker network inspect inception
-```
-
-Verify that the WordPress configuration uses the MariaDB service name:
-
-```text
-
-mariadb
-```
-
-and the internal database port:
-
-```text
-
-3306
-```
-
-The WordPress container also waits for MariaDB during startup. Check:
-
-```bash
-
-docker logs wordpress
-```
-
-for messages such as:
-
-```text
-
-Waiting for MariaDB...
-```
-
-**### WordPress/PHP-FPM is not responding**
-
-Check the WordPress container:
-
-```bash
-
-docker ps -a
-```
-
-Check its logs:
-
-```bash
-
-docker logs wordpress
-```
-
-Verify that PHP-FPM is running and listening on:
-
-```text
-
-9000
-```
-
-Also check the NGINX configuration and its FastCGI destination:
-
-```text
-
-wordpress:9000
-```
-
-**### Automatic WordPress installation does not complete**
-
-First check the WordPress logs:
-
-```bash
-
-docker logs wordpress
-```
-
-On a clean installation, the logs should show the startup sequence, including messages similar to:
-
-```text
-
-Waiting for MariaDB...
 WordPress is not installed. Installing...
 Success: WordPress installed successfully.
 Success: Created user 2.
 ```
 
-Check whether WordPress considers itself installed:
+### Existing installation
 
-```bash
-
-docker exec wordpress wp core is-installed --allow-root
-```
-
-Check the WordPress version:
-
-```bash
-
-docker exec wordpress wp core version --allow-root
-```
-
-Check the users:
-
-```bash
-
-docker exec wordpress wp user list --allow-root
-```
-
-If WordPress is already installed, the startup script intentionally skips the installation.
-
-The logs should then contain:
+If WordPress already exists in persistent storage:
 
 ```text
-
 WordPress is already installed.
 ```
 
-**### Testing automatic installation from a clean state**
+The installation and user creation steps are skipped.
 
-The automatic installation is intended to run when the persistent WordPress data is empty.
+This prevents duplicate users and repeated installation when the container is recreated.
 
-Before performing a destructive reset, check the existing data:
-
-```bash
-
-ls -la /home/tavd/data/
-```
-
-The WordPress data is stored under:
-
-```text
-
-/home/tavd/data/wordpress/
-```
-
-and MariaDB data under:
-
-```text
-
-/home/tavd/data/mariadb/
-```
-
-A clean automatic installation test follows this general sequence:
-
-```text
-
-Empty persistent WordPress/MariaDB data
-
-```
-    │
-
-    ▼
-```
-
-Start containers
-
-```
-    │
-
-    ▼
-```
-
-WordPress creates wp-config.php
-
-```
-    │
-
-    ▼
-```
-
-Wait for MariaDB
-
-```
-    │
-
-    ▼
-```
-
-Check wp core is-installed
-
-```
-    │
-
-    ▼
-```
-
-Run wp core install
-
-```
-    │
-
-    ▼
-```
-
-Create normal user
-
-```
-    │
-
-    ▼
-```
-
-Start PHP-FPM
-```
-
-Do not delete persistent data unless intentionally resetting the project.
-
-**### WordPress already appears to be installed**
-
-This is expected when the persistent data already contains a WordPress installation.
-
-Check:
+### Verify installation
 
 ```bash
-
-docker exec wordpress wp core is-installed --allow-root
-```
-
-If the command succeeds, WordPress is already initialized.
-
-The startup script will not reinstall WordPress or recreate the normal user.
-
-This prevents existing persistent data from being overwritten during normal container restarts or recreation.
-
-**### Data appears to be missing**
-
-First check the Docker volumes:
-
-```bash
-
-docker volume ls
-```
-
-Then inspect the relevant volume:
-
-```bash
-
-docker volume inspect <volume_name>
-```
-
-Check the host data directory:
-
-```bash
-
-ls -la /home/tavd/data/
-```
-
-Do not remove the volumes while troubleshooting unless you intentionally want to reset the project.
-
----
-
-**## Cleaning the Project**
-
-The normal way to stop and remove the running containers is:
-
-```bash
-
-make down
-```
-
-This does not normally remove the persistent WordPress and MariaDB data.
-
-Be careful with Docker commands that include volume removal.
-
-For example:
-
-```bash
-
-docker compose down -v
-```
-
-removes the Compose volumes.
-
-This should only be used when intentionally resetting the persistent project data.
-
-Before performing a destructive cleanup, make sure that losing the WordPress database and website data is acceptable.
-
----
-
-**## Development Workflow**
-
-A typical development workflow is:
-
-**### 1. Enter the project directory**
-
-```bash
-
-cd ~/inception
-```
-
-**### 2. Check the project files**
-
-```bash
-
-ls -la
-```
-
-**### 3. Check Docker**
-
-```bash
-
-docker info
-```
-
-**### 4. Build and start the project**
-
-```bash
-
-make build
-```
-
-**### 5. Check the containers**
-
-```bash
-
-docker ps
-```
-
-**### 6. Check logs if necessary**
-
-```bash
-
-docker logs nginx
-
-docker logs wordpress
-
-docker logs mariadb
-```
-
-**### 7. Verify the automatic WordPress installation**
-
-Check:
-
-```bash
-
 docker exec wordpress wp core is-installed --allow-root
 ```
 
 Check the version:
 
 ```bash
-
 docker exec wordpress wp core version --allow-root
 ```
 
 List users:
 
 ```bash
-
 docker exec wordpress wp user list --allow-root
 ```
 
-**### 8. Test HTTPS from the VM**
+## Building Project
+
+From the project root:
 
 ```bash
-
-curl -kI https://tavdiiev.42.fr/
+make
 ```
 
-**### 9. Test HTTPS from the school host**
+The Makefile creates the required persistent-data directories if necessary and starts Docker Compose.
 
-Because the school host uses VirtualBox forwarding from `8443` to the VM's `443`, use:
+To rebuild the images:
 
 ```bash
-
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
+make build
 ```
 
-This tests the project without changing the canonical WordPress URL.
-
-**### 10. Make configuration or Dockerfile changes**
-
-Edit the relevant files under:
+The Compose command uses:
 
 ```text
-
-srcs/
+srcs/docker-compose.yml
 ```
 
 and:
 
 ```text
-
-srcs/requirements/
+srcs/.env
 ```
 
-**### 11. Rebuild after Dockerfile changes**
+## Launching Project
+
+The normal startup command is:
 
 ```bash
-
-make build
+make
 ```
 
 or:
 
 ```bash
-
-make re
+make all
 ```
 
-**### 12. Stop the project when finished**
+The services are started in detached mode.
+
+Check them with:
 
 ```bash
-
-make down
+docker ps
 ```
 
-Persistent data remains in the Docker named volumes unless those volumes are explicitly removed.
-
----
-
-**## Important Project Constraints**
-
-When modifying the project, keep the Inception requirements in mind.
-
-**### Containers**
-
-Each service must run in its own dedicated container:
+Expected containers:
 
 ```text
-
 nginx
-
 wordpress
-
 mariadb
 ```
 
-**### Images**
+## Checking Docker Network
 
-The project images must be built using the project's own Dockerfiles.
+The project uses:
 
-Do not replace the project services with ready-made application images.
-
-Do not use the `latest` tag.
-
-**### Network**
-
-The services must communicate through the project's Docker network.
-
-Do not use:
-
-```text
-
-network: host
+```yaml
+networks:
+  inception:
+    driver: bridge
 ```
 
-or Docker links.
+All services are connected to this network.
 
-**### Entry point**
+Check the network:
 
-NGINX must be the only external entry point.
-
-The infrastructure must be accessible externally through:
-
-```text
-
-443
+```bash
+docker network ls
 ```
 
-using TLSv1.2 or TLSv1.3.
+Inspect it:
 
-The school environment may use host-side VirtualBox port `8443` to forward to the VM's port `443`. This does not change the project's actual NGINX port.
+```bash
+docker network inspect inception
+```
 
-**### Persistent storage**
-
-The project defines Docker named volumes:
+Docker's internal DNS allows:
 
 ```text
+wordpress → mariadb:3306
+nginx → wordpress:9000
+```
 
+No service requires a hard-coded container IP address.
+
+## Managing Containers
+
+Show running containers:
+
+```bash
+docker ps
+```
+
+Show all containers:
+
+```bash
+docker ps -a
+```
+
+Inspect a container:
+
+```bash
+docker inspect nginx
+docker inspect wordpress
+docker inspect mariadb
+```
+
+View logs:
+
+```bash
+docker logs nginx
+docker logs wordpress
+docker logs mariadb
+```
+
+Follow logs:
+
+```bash
+docker logs -f wordpress
+```
+
+## Managing Project With Makefile
+
+Available Makefile targets:
+
+```text
+all
+build
+down
+re
+clean
+fclean
+```
+
+### `make`
+
+Starts the existing configuration.
+
+### `make build`
+
+Builds the images and starts the services.
+
+### `make down`
+
+Stops and removes the Compose containers and network.
+
+Persistent data is normally preserved.
+
+### `make re`
+
+Stops the current infrastructure, rebuilds it, and starts it again.
+
+### `make clean`
+
+Performs project cleanup.
+
+Use with caution because persistent data may be affected.
+
+### `make fclean`
+
+Performs more extensive Docker cleanup.
+
+Use with particular caution because persistent project data may be deleted.
+
+## Managing Docker Compose Directly
+
+The project can also be managed directly with Docker Compose.
+
+Start:
+
+```bash
+docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d
+```
+
+Build and start:
+
+```bash
+docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
+```
+
+Stop and remove containers:
+
+```bash
+docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env down
+```
+
+Avoid:
+
+```bash
+docker-compose down -v
+```
+
+unless intentionally resetting persistent data.
+
+## Managing Volumes
+
+The project defines two named Docker volumes:
+
+```text
 wp-volume
-
 db-volume
 ```
 
-Their storage is backed by the required host directories under:
+Their storage is backed by:
 
 ```text
-
-/home/${USER}/data/
+/home/${USER}/data/wordpress
+/home/${USER}/data/mariadb
 ```
 
-through the Docker volume driver's bind configuration.
+The Compose configuration uses:
 
-The persistent data must therefore remain under the required host data directories.
+```yaml
+volumes:
+  wp-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/wordpress
 
-**### Security**
+  db-volume:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/mariadb
+```
 
-Never place passwords directly in Dockerfiles.
-
-Never commit passwords, credentials, API keys, or other confidential information to Git.
-
-Use environment variables for non-secret configuration and Docker secrets for confidential information.
-
-**### Container processes**
-
-Do not use infinite-loop hacks such as:
+The volumes are mounted as:
 
 ```text
-
-tail -f
-
-bash
-
-sleep infinity
-
-while true
+wp-volume → /var/www/
+db-volume → /var/lib/mysql
 ```
 
-to keep containers alive.
+Use the project's defined named volumes and required host storage layout. Do not replace them with unrelated host bind mounts or another persistence mechanism.
 
-Each container should run its actual service as its main process.
+## Persistent Data
 
----
+Persistent WordPress files are stored under:
 
-**## Quick Reference**
+```text
+/home/${USER}/data/wordpress
+```
 
-| ****Action**** | ****Command**** |
+Persistent MariaDB data is stored under:
 
-| --- | --- |
+```text
+/home/${USER}/data/mariadb
+```
 
-| Start | `make` |
+This data survives normal container recreation.
 
-| Build and start | `make build` |
+Deleting the MariaDB storage can destroy the WordPress database, including users and settings.
 
-| Stop | `make down` |
+## NGINX Configuration
 
-| Rebuild | `make re` |
+The NGINX server listens on HTTPS port 443:
 
-| Check running containers | `docker ps` |
+```nginx
+server {
+    listen 443 ssl;
+    server_name tavdiiev.42.fr www.tavdiiev.42.fr;
+```
 
-| Check all containers | `docker ps -a` |
+The document root is:
 
-| List images | `docker image ls` |
+```nginx
+root /var/www/;
+```
 
-| List volumes | `docker volume ls` |
+The default index is:
 
-| List networks | `docker network ls` |
+```nginx
+index index.php;
+```
 
-| Inspect network | `docker network inspect inception` |
+TLS is configured with:
 
-| NGINX logs | `docker logs nginx` |
+```nginx
+ssl_protocols TLSv1.2 TLSv1.3;
+```
 
-| WordPress logs | `docker logs wordpress` |
+PHP requests are passed to:
 
-| MariaDB logs | `docker logs mariadb` |
+```nginx
+fastcgi_pass wordpress:9000;
+```
 
-| Inspect NGINX | `docker inspect nginx` |
+The PHP script filename is constructed with:
 
-| Inspect WordPress | `docker inspect wordpress` |
+```nginx
+fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+```
 
-| Inspect MariaDB | `docker inspect mariadb` |
+The NGINX container is the only service published outside the Docker network.
 
-| Check WordPress installation | `docker exec wordpress wp core is-installed --allow-root` |
+## WordPress Configuration
 
-| Check WordPress version | `docker exec wordpress wp core version --allow-root` |
+The WordPress configuration is generated by:
 
-| List WordPress users | `docker exec wordpress wp user list --allow-root` |
+```text
+srcs/requirements/wordpress/conf/wp-config-create.sh
+```
 
-| Test HTTPS from VM | `curl -kI https://tavdiiev.42.fr/\` |
+It creates:
 
-| Test HTTPS from school host | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/\` |
+```text
+/var/www/wp-config.php
+```
 
-| Project data | `/home/tavd/data/` |
+only if the file does not already exist.
 
-| WordPress data | `/home/tavd/data/wordpress/` |
+The database configuration uses:
 
-| MariaDB data | `/home/tavd/data/mariadb/` |
+```text
+DB_NAME
+DB_USER
+/run/secrets/db_password
+DB_HOST=mariadb
+```
 
-| WordPress mount | `/var/www/` |
+The database host is the Docker service name:
 
-| MariaDB mount | `/var/lib/mysql/` |
+```text
+mariadb
+```
 
-| NGINX HTTPS | `443` |
+not a container IP address.
 
-| School VirtualBox HTTPS | `8443` → VM `443` |
+The table prefix is:
 
-| WordPress/PHP-FPM | `wordpress:9000` |
+```text
+wp_
+```
 
-| MariaDB | `mariadb:3306` |
+The project uses:
+
+```text
+FS_METHOD=direct
+WP_DEBUG=false
+```
+
+## MariaDB Configuration
+
+MariaDB is initialized by:
+
+```text
+srcs/requirements/mariadb/conf/create_db.sh
+```
+
+The script:
+
+1. Initializes the MariaDB data directory when necessary.
+2. Reads the database and root passwords from Docker secrets.
+3. Removes the default anonymous users.
+4. Removes the default test database.
+5. Configures the MariaDB root password.
+6. Creates the WordPress database.
+7. Creates the WordPress database user.
+8. Grants the required privileges.
+
+The database is only initialized when the persistent database has not already been initialized.
+
+MariaDB listens internally on port 3306.
+
+It is not published to the host.
+
+## Docker Secrets and Security
+
+The project uses four Docker secrets:
+
+```text
+db_password.txt
+db_root_password.txt
+wp_admin_password.txt
+wp_user_password.txt
+```
+
+The Compose configuration maps them into the containers under:
+
+```text
+/run/secrets/
+```
+
+Passwords are therefore not stored directly in Dockerfiles or Compose environment variables.
+
+The `.env` file contains non-sensitive configuration and is excluded from Git.
+
+The secret directory is also excluded from Git.
+
+The TLS private key is excluded from Git.
+
+## Rebuilding After Configuration Changes
+
+After changing Dockerfiles or other image-build configuration:
+
+```bash
+make build
+```
+
+After changing Compose configuration:
+
+```bash
+make down
+make
+```
+
+For a complete rebuild:
+
+```bash
+make re
+```
+
+Be careful when cleaning volumes because the WordPress and MariaDB data is persistent.
+
+## Troubleshooting
+
+### WordPress automatic installation does not complete
+
+Check the WordPress logs:
+
+```bash
+docker logs wordpress
+```
+
+Look for:
+
+```text
+Waiting for MariaDB...
+```
+
+or:
+
+```text
+WordPress is not installed. Installing...
+```
+
+Check whether WordPress is installed:
+
+```bash
+docker exec wordpress wp core is-installed --allow-root
+```
+
+Check the WordPress version:
+
+```bash
+docker exec wordpress wp core version --allow-root
+```
+
+Check the users:
+
+```bash
+docker exec wordpress wp user list --allow-root
+```
+
+If testing from completely clean data, remember that deleting the persistent WordPress and MariaDB data resets the installation.
+
+### MariaDB does not start
+
+Check:
+
+```bash
+docker logs mariadb
+```
+
+Check the container:
+
+```bash
+docker inspect mariadb
+```
+
+Check that the required secrets exist and are readable by the containers.
+
+### NGINX does not start
+
+Check:
+
+```bash
+docker logs nginx
+```
+
+Verify the certificate and key exist.
+
+Check the NGINX configuration:
+
+```bash
+docker exec nginx nginx -t
+```
+
+### WordPress cannot connect to MariaDB
+
+Verify the service is running:
+
+```bash
+docker ps
+```
+
+Verify network connectivity:
+
+```bash
+docker network inspect inception
+```
+
+The WordPress container should use:
+
+```text
+mariadb
+```
+
+as the database host.
+
+### School host HTTPS test
+
+From the school host:
+
+```bash
+curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
+```
+
+A successful response should be similar to:
+
+```text
+HTTP/1.1 200 OK
+Server: nginx
+```
+
+This tests the host-to-VM forwarded connection without changing the canonical WordPress URL.
+
+### Browser redirects from port 8443
+
+This can happen because WordPress is configured with:
+
+```text
+https://tavdiiev.42.fr
+```
+
+rather than:
+
+```text
+https://tavdiiev.42.fr:8443
+```
+
+This is expected.
+
+Do not permanently change `WP_URL` to include `:8443`.
+
+## Cleaning Project
+
+Do not use destructive cleanup commands unless intentionally resetting the project.
+
+In particular:
+
+```bash
+docker-compose down -v
+```
+
+removes Docker volumes.
+
+The project's `make clean` and `make fclean` targets should also be treated as potentially destructive operations.
+
+Deleting:
+
+```text
+/home/${USER}/data/mariadb
+```
+
+removes the persistent MariaDB database.
+
+Deleting:
+
+```text
+/home/${USER}/data/wordpress
+```
+
+removes the persistent WordPress installation.
+
+## Development Workflow
+
+A normal development workflow is:
+
+```bash
+make
+```
+
+Check the services:
+
+```bash
+docker ps
+```
+
+Check WordPress:
+
+```bash
+docker exec wordpress wp core is-installed --allow-root
+```
+
+Check the users:
+
+```bash
+docker exec wordpress wp user list --allow-root
+```
+
+Check logs when needed:
+
+```bash
+docker logs wordpress
+docker logs nginx
+docker logs mariadb
+```
+
+For an HTTPS test inside the VM:
+
+```bash
+curl -kI https://tavdiiev.42.fr/
+```
+
+For an HTTPS test from the school host:
+
+```bash
+curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
+```
+
+## Important Project Constraints
+
+The project should maintain the following architecture:
+
+* NGINX is the only public entry point.
+* NGINX listens on HTTPS port 443.
+* TLS 1.2 and TLS 1.3 are enabled.
+* WordPress/PHP-FPM is internal.
+* MariaDB is internal.
+* Services communicate through the `inception` Docker bridge network.
+* Service names are used for internal communication.
+* No host networking is required.
+* No hard-coded container IP addresses are required.
+* No passwords are stored in Dockerfiles or committed to Git.
+* Use Docker secrets for passwords.
+* Use the project's defined named volumes and required host storage layout.
+* Do not replace the required persistence mechanism with unrelated storage.
+* Do not use `latest` as a base-image tag.
+* Do not expose MariaDB or PHP-FPM through published host ports.
+* Keep the canonical WordPress URL as `https://tavdiiev.42.fr`.
+* Do not add the school-only VirtualBox port `8443` to the final WordPress URL.
+
+## Quick Reference
+
+| **Action**                   | **Command**                                                  |
+| ---------------------------- | ------------------------------------------------------------ |
+| Start                        | `make`                                                       |
+| Build and start              | `make build`                                                 |
+| Stop                         | `make down`                                                  |
+| Rebuild                      | `make re`                                                    |
+| Check containers             | `docker ps`                                                  |
+| Check all containers         | `docker ps -a`                                               |
+| Check network                | `docker network inspect inception`                           |
+| NGINX logs                   | `docker logs nginx`                                          |
+| WordPress logs               | `docker logs wordpress`                                      |
+| MariaDB logs                 | `docker logs mariadb`                                        |
+| Check WordPress installation | `docker exec wordpress wp core is-installed --allow-root`    |
+| Check WordPress version      | `docker exec wordpress wp core version --allow-root`         |
+| List WordPress users         | `docker exec wordpress wp user list --allow-root`            |
+| Test HTTPS from VM           | `curl -kI https://tavdiiev.42.fr/`                           |
+| Test HTTPS from school host  | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/` |
+
+```
+```
