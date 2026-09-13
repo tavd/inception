@@ -358,8 +358,6 @@ A typical configuration contains:
 
 ```env
 DOMAIN_NAME=tavdiiev.42.fr
-CERT_=./requirements/tools/tavdiiev.42.fr.crt
-KEY_=./requirements/tools/tavdiiev.42.fr.key
 DB_NAME=wordpress
 DB_USER=wpuser
 WP_TITLE=Inception
