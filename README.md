@@ -606,7 +606,7 @@ AI was used as a support and explanation tool rather than as a replacement for u
 
 I also reconstructed this from the latest version of the developer documentation and the project changes we made:
 
-```markdown
+
 # Inception — Developer Documentation
 
 ## Overview
@@ -623,7 +623,7 @@ The services communicate through a private Docker bridge network named `inceptio
 
 The architecture is:
 
-```text
+
 Browser
    │
    │ HTTPS :443
@@ -637,7 +637,6 @@ WordPress / PHP-FPM
    │ MySQL :3306
    ▼
 MariaDB
-````
 
 Only NGINX publishes a port. WordPress/PHP-FPM and MariaDB are internal services.
 
@@ -1985,6 +1984,3 @@ Removing the MariaDB data can result in losing the WordPress database and its us
 | School host HTTPS test       | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/` |
 | Website                      | `https://tavdiiev.42.fr/`                                    |
 | WordPress admin              | `https://tavdiiev.42.fr/wp-admin/`                           |
-
-**Important:** I put each complete file inside an outer code fence in the writing block. The **content inside those fences is the exact Markdown you should put into the corresponding GitHub file**. In particular, the file should contain `### AI usage`, `**NGINX**`, ` ```bash`, etc. — **not** the backslash-escaped versions from your earlier messages.
-
