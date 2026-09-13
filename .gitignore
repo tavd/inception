@@ -2,8 +2,9 @@
 
 .env
 srcs/.env
-secrets/
-
+!srcs/.env.example
+secrets/*
+!secrets/*.example
 # certificates/private keys
 
 *.key

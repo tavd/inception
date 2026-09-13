@@ -38,13 +38,13 @@ inception/
 ├── README.md
 ├── USER_DOC.md
 ├── DEV_DOC.md
-├── secrets/
+├── secrets/                # git-ignored real credentials (one secret per file)
 │   ├── db_password.txt
 │   ├── db_root_password.txt
 │   ├── wp_admin_password.txt
 │   └── wp_user_password.txt
 └── srcs/
-    ├── .env
+    ├── .env                # git-ignored non-secret config + the names of things
     ├── docker-compose.yml
     └── requirements/
         ├── nginx/
