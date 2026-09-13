@@ -1,6 +1,6 @@
-**This project has been created as part of the 42 curriculum by tavdiiev.**
+*This project has been created as part of the 42 curriculum by tavdiiev.*
 
-**# Inception**
+# Inception
 
 A small WordPress infrastructure built from scratch with Docker and orchestrated by Docker Compose. The stack consists of NGINX, WordPress with PHP-FPM, and MariaDB, with HTTPS handled by NGINX and persistent data stored using Docker volumes. Each service is built locally from an Alpine Linux base image, with the containers communicating through a dedicated Docker bridge network.
 
