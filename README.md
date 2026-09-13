@@ -1,4 +1,4 @@
-````markdown
+
 *This project has been created as part of the 42 curriculum by tavdiiev.*
 
 # Inception
@@ -17,7 +17,7 @@ The infrastructure consists of three main services:
 
 The resulting architecture is:
 
-```text
+
                         HTTPS :443
 
                               │
@@ -46,7 +46,7 @@ The resulting architecture is:
                        └──────────┘
 
                  Docker bridge network: inception
-````
+
 
 Only NGINX is exposed outside the Docker network. WordPress/PHP-FPM and MariaDB communicate internally through the Docker bridge network.
 
