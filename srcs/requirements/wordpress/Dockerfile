@@ -1,8 +1,6 @@
 FROM alpine:3.23
 
 ARG PHP_VERSION=85
-# ARG DB_NAME
-# ARG DB_USER
 
 RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION} \
@@ -16,10 +14,13 @@ RUN apk update && apk upgrade && apk add --no-cache \
     php${PHP_VERSION}-openssl \
     php${PHP_VERSION}-xml \
     php${PHP_VERSION}-zip \
+    php${PHP_VERSION}-phar \
     wget \
     unzip
-# RUN wget -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
-#     chmod +x /usr/local/bin/wp
+
+RUN ln -s /usr/bin/php${PHP_VERSION} /usr/bin/php
+RUN wget -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x /usr/local/bin/wp
 RUN sed -i "s|listen = 127.0.0.1:9000|listen = 9000|g" \
     /etc/php${PHP_VERSION}/php-fpm.d/www.conf && \
     sed -i "s|;listen.owner = nobody|listen.owner = nobody|g" \
