@@ -86,6 +86,24 @@ The current project uses Alpine Linux 3.23 as the base image for all three servi
 
 ## Setting Up Environment From Scratch
 
+After cloning the repository, the local environment-specific files must be created before the first build.
+
+The real `.env` and secret files are excluded from Git:
+
+```text
+srcs/.env
+secrets/*.txt
+```
+
+The repository contains tracked example templates that can be copied to create them:
+
+```text
+srcs/.env.example
+secrets/*.txt.example
+```
+
+The example files contain placeholders only and must be replaced with the real local values before starting the project.
+
 ### Clone the repository
 
 ```bash
@@ -93,37 +111,74 @@ git clone <repository-url>
 cd inception
 ```
 
-### Create the local `.env`
+### 1. Create `srcs/.env` from the example
 
-The Makefile expects:
+Copy the tracked environment template:
 
-```text
-srcs/.env
+```bash
+cp srcs/.env.example srcs/.env
 ```
 
-A typical configuration is:
+Then edit `srcs/.env` and replace the example values with the values required for the local environment.
 
-```env
-DOMAIN_NAME=tavdiiev.42.fr
-CERT_=./requirements/tools/tavdiiev.42.fr.crt
-KEY_=./requirements/tools/tavdiiev.42.fr.key
+The template contains the variables expected by the project:
+
+```dotenv
+# Domain
+DOMAIN_NAME=example.42.fr
+
+# TLS certificate and private key
+CERT_=./requirements/tools/example.42.fr.crt
+KEY_=./requirements/tools/example.42.fr.key
+
+# MariaDB
 DB_NAME=wordpress
 DB_USER=wpuser
+
+# WordPress
 WP_TITLE=Inception
-WP_ADMIN_USER=tavd_user1
-WP_ADMIN_EMAIL=some_email@gmail.com
-WP_USER=tavd_user2
-WP_USER_EMAIL=some_email2@gmail.com
-WP_URL=https://tavdiiev.42.fr
+WP_ADMIN_USER=example_user
+WP_ADMIN_EMAIL=example_user@example.com
+WP_USER=example_user2
+WP_USER_EMAIL=example_user2@example.com
+
+# Canonical WordPress URL
+WP_URL=https://example.42.fr
 ```
 
-`WP_URL` must remain the canonical project URL without `:8443`.
+`WP_ADMIN_USER` must not contain `admin` or `administrator`, case-insensitively.
 
-Port `8443` is only used by the school VirtualBox environment as a host-side forwarding port.
+Passwords are **not stored in** **`.env`**. They are provided separately through Docker secrets.
 
-### Create the secrets
+Keep the variable names unchanged because they are used by the Docker Compose configuration and startup scripts.
 
-The project expects four secret files:
+The canonical `WP_URL` must not contain the school VirtualBox forwarding port such as `:8443`. The project URL remains:
+
+```text
+https://tavdiiev.42.fr
+```
+
+Port `8443` is only used as a host-side forwarding port in the school VirtualBox environment.
+
+### 2. Create the secret files from the examples
+
+The repository contains tracked templates for the four required Docker secrets:
+
+```text
+secrets/
+├── db_password.txt.example
+├── db_root_password.txt.example
+├── wp_admin_password.txt.example
+└── wp_user_password.txt.example
+```
+
+Copy all of the templates to their real filenames:
+
+```bash
+for f in secrets/*.txt.example; do cp "$f" "${f%.example}"; done
+```
+
+This creates:
 
 ```text
 secrets/
@@ -133,18 +188,55 @@ secrets/
 └── wp_user_password.txt
 ```
 
-Their purposes are:
+Edit each real secret file and replace its placeholder with the required value:
 
-* `db_password.txt` — password for the MariaDB database user used by WordPress.
-* `db_root_password.txt` — MariaDB root password.
-* `wp_admin_password.txt` — WordPress administrator password.
-* `wp_user_password.txt` — normal/subscriber WordPress user password.
+```text
+secrets/db_root_password.txt
+    → MariaDB root password
 
-The files contain sensitive information and must not be committed to Git.
+secrets/db_password.txt
+    → MariaDB password for the WordPress database user
 
-### TLS certificate and key
+secrets/wp_admin_password.txt
+    → WordPress administrator password
 
-NGINX expects the certificate and private key at:
+secrets/wp_user_password.txt
+    → WordPress normal/subscriber user password
+```
+
+Each secret file should contain **only the raw secret value**:
+
+```text
+my_real_password
+```
+
+Do not add a variable name, label, quotes, or other text.
+
+For example, do not write:
+
+```text
+DB_PASSWORD=my_real_password
+```
+
+The files are mounted by Docker as secrets under:
+
+```text
+/run/secrets/
+```
+
+and the project startup scripts read them from there.
+
+A trailing newline in a secret file is harmless because the project reads the values using command substitution such as:
+
+```sh
+$(cat /run/secrets/db_password)
+```
+
+Command substitution removes trailing newline characters.
+
+### 3. Provide the TLS certificate and private key
+
+NGINX requires a certificate and private key:
 
 ```text
 srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
@@ -152,6 +244,64 @@ srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
 
 These files are local environment-specific files and are excluded from Git.
+
+The certificate and key filenames must match the paths used by the NGINX configuration and the values in `srcs/.env`.
+
+### 4. Verify the local files before building
+
+A fresh clone should contain the example templates but not the real credentials:
+
+```text
+srcs/.env.example
+secrets/*.txt.example
+```
+
+After creating the local files, the working tree should contain:
+
+```text
+srcs/.env
+secrets/db_password.txt
+secrets/db_root_password.txt
+secrets/wp_admin_password.txt
+secrets/wp_user_password.txt
+```
+
+These real files are ignored by Git.
+
+You can verify this with:
+
+```bash
+git status --short --ignored
+```
+
+The real `.env` and secret files should appear as ignored files (`!!`) rather than staged or untracked files.
+
+### 5. Keeping the examples in sync
+
+If a project variable or required secret is added or renamed, update the corresponding `*.example` template as well.
+
+For example:
+
+- adding a variable to `srcs/.env` → update `srcs/.env.example`
+- adding a Docker secret → add the corresponding `secrets/*.txt.example`
+
+The `.gitignore` is configured so that:
+
+```text
+srcs/.env
+secrets/*.txt
+```
+
+remain excluded from Git, while:
+
+```text
+srcs/.env.example
+secrets/*.txt.example
+```
+
+remain trackable.
+
+This allows a fresh clone to contain everything needed to understand and reproduce the configuration without committing any real credentials.
 
 ## School Environment and Browser Access
 
