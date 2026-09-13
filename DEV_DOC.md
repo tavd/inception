@@ -129,10 +129,6 @@ The template contains the variables expected by the project:
 # Domain
 DOMAIN_NAME=example.42.fr
 
-# TLS certificate and private key
-CERT_=./requirements/tools/example.42.fr.crt
-KEY_=./requirements/tools/example.42.fr.key
-
 # MariaDB
 DB_NAME=wordpress
 DB_USER=wpuser
@@ -236,20 +232,82 @@ $(cat /run/secrets/db_password)
 
 Command substitution removes trailing newline characters.
 
-### 3. Provide the TLS certificate and private key
+### 3. Create the local TLS certificate and private key
 
-NGINX requires a certificate and private key:
+The NGINX configuration requires these two files:
 
 ```text
 srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
 srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
 
-These files are local environment-specific files and are excluded from Git.
+These files are local environment-specific files and are excluded from Git because `.gitignore` ignores `*.crt` and `*.key` files.
 
-The certificate and key filenames must match the paths used by the NGINX configuration and the values in `srcs/.env`.
+Therefore, a fresh Git clone does not contain the certificate or private key.
 
-### 4. Verify the local files before building
+Create the directory if it does not already exist:
+
+```bash
+mkdir -p srcs/requirements/nginx/tools
+```
+
+The project uses `mkcert` to create a local development certificate.
+
+Check that `mkcert` is installed:
+
+```bash
+mkcert --version
+```
+
+Then change to the NGINX tools directory:
+
+```bash
+cd srcs/requirements/nginx/tools
+```
+
+Generate a certificate for the domain used by the project:
+
+```bash
+mkcert tavdiiev.42.fr
+```
+
+`mkcert` normally creates two files:
+
+```text
+tavdiiev.42.fr.pem
+tavdiiev.42.fr-key.pem
+```
+
+Rename them to the filenames expected by the NGINX configuration:
+
+```bash
+mv tavdiiev.42.fr.pem tavdiiev.42.fr.crt
+mv tavdiiev.42.fr-key.pem tavdiiev.42.fr.key
+```
+
+The directory should then contain:
+
+```text
+tavdiiev.42.fr.crt
+tavdiiev.42.fr.key
+```
+
+The certificate and private key are mounted into the NGINX container by Docker Compose:
+
+```yaml
+- ./requirements/nginx/tools:/etc/nginx/ssl/
+```
+
+Inside the container, NGINX therefore uses:
+
+```text
+/etc/nginx/ssl/tavdiiev.42.fr.crt
+/etc/nginx/ssl/tavdiiev.42.fr.key
+```
+
+These files must exist locally before starting the containers because NGINX needs them to configure HTTPS.
+
+### 4. Verify the local files before building and starting
 
 A fresh clone should contain the example templates but not the real credentials:
 
@@ -266,6 +324,8 @@ secrets/db_password.txt
 secrets/db_root_password.txt
 secrets/wp_admin_password.txt
 secrets/wp_user_password.txt
+srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
+srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
 
 These real files are ignored by Git.
@@ -276,7 +336,9 @@ You can verify this with:
 git status --short --ignored
 ```
 
-The real `.env` and secret files should appear as ignored files (`!!`) rather than staged or untracked files.
+The real `.env` and secret files should appear as ignored files (`!!`).
+
+The certificate and private key are inside the ignored `srcs/requirements/nginx/tools/` directory, which should also appear as an ignored path (`!!`).
 
 ### 5. Keeping the examples in sync
 
