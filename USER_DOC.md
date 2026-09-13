@@ -1,4 +1,3 @@
-````markdown
 # Inception — User Documentation
 
 ## Overview
@@ -13,7 +12,6 @@ The stack consists of three services:
 
 The services communicate through a private Docker network.
 
-```text
 Browser
    │
    │ HTTPS :443
@@ -27,7 +25,7 @@ WordPress / PHP-FPM
    │ MySQL :3306
    ▼
 MariaDB
-````
+
 
 Only NGINX is exposed to the outside. WordPress/PHP-FPM and MariaDB are used internally by the stack.
 

@@ -1,4 +1,3 @@
-````markdown
 # Inception — Developer Documentation
 
 ## Overview
@@ -15,7 +14,6 @@ The services communicate through a private Docker bridge network named `inceptio
 
 The architecture is:
 
-```text
 Browser
    │
    │ HTTPS :443
@@ -29,7 +27,6 @@ WordPress / PHP-FPM
    │ MySQL :3306
    ▼
 MariaDB
-````
 
 Only NGINX publishes a port. WordPress/PHP-FPM and MariaDB are internal services.
 
