@@ -374,6 +374,3 @@ Removing the MariaDB data can result in losing the WordPress database and its us
 | School host HTTPS test       | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/` |
 | Website                      | `https://tavdiiev.42.fr/`                                    |
 | WordPress admin              | `https://tavdiiev.42.fr/wp-admin/`                           |
-
-```
-```

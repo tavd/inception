@@ -1986,7 +1986,5 @@ Removing the MariaDB data can result in losing the WordPress database and its us
 | Website                      | `https://tavdiiev.42.fr/`                                    |
 | WordPress admin              | `https://tavdiiev.42.fr/wp-admin/`                           |
 
-````
-
 **Important:** I put each complete file inside an outer code fence in the writing block. The **content inside those fences is the exact Markdown you should put into the corresponding GitHub file**. In particular, the file should contain `### AI usage`, `**NGINX**`, ` ```bash`, etc. — **not** the backslash-escaped versions from your earlier messages.
-````
+

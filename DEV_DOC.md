@@ -991,6 +991,3 @@ The project should maintain the following architecture:
 | List WordPress users         | `docker exec wordpress wp user list --allow-root`            |
 | Test HTTPS from VM           | `curl -kI https://tavdiiev.42.fr/`                           |
 | Test HTTPS from school host  | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/` |
-
-```
-```
