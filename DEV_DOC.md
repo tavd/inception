@@ -82,7 +82,7 @@ The development environment requires:
 * Docker Compose
 * Git
 * Bash
-- mkcert
+* mkcert
 * A Linux environment capable of running Docker
 
 The current project uses Alpine Linux 3.23 as the base image for all three services.
@@ -143,7 +143,6 @@ WP_ADMIN_EMAIL=example_user@example.com
 WP_USER=example_user2
 WP_USER_EMAIL=example_user2@example.com
 
-```markdown
 # Canonical WordPress URL
 WP_URL=https://tavdiiev.42.fr
 
