@@ -40,20 +40,20 @@ inception/
 ├── README.md
 ├── USER_DOC.md
 ├── DEV_DOC.md
-├── secrets/                # git-ignored real credentials (one secret per file)
+├── secrets/                           # git-ignored real credentials (one secret per file)
 │   ├── db_password.txt
 │   ├── db_root_password.txt
 │   ├── wp_admin_password.txt
 │   └── wp_user_password.txt
 └── srcs/
-    ├── .env                # git-ignored non-secret config + the names of things
+    ├── .env                           # git-ignored non-secret
     ├── docker-compose.yml
     └── requirements/
         ├── nginx/
         │   ├── Dockerfile
         │   ├── conf/
         │   │   └── nginx.conf
-        │   └── tools/
+        │   └── tools/                 # git-ignored
         │       ├── tavdiiev.42.fr.crt
         │       └── tavdiiev.42.fr.key
         │
@@ -82,6 +82,7 @@ The development environment requires:
 * Docker Compose
 * Git
 * Bash
+- mkcert
 * A Linux environment capable of running Docker
 
 The current project uses Alpine Linux 3.23 as the base image for all three services.
@@ -97,7 +98,7 @@ srcs/.env
 secrets/*.txt
 ```
 
-The repository contains tracked example templates that can be copied to create them:
+The repository contains tracked example templates that can be copied and renamed to create the required local files:
 
 ```text
 srcs/.env.example
@@ -106,11 +107,11 @@ secrets/*.txt.example
 
 The example files contain placeholders only and must be replaced with the real local values before starting the project.
 
-### Clone the repository
+### Clone the repository and enter the project directory:
 
 ```bash
 git clone <repository-url>
-cd inception
+cd <project-directory>
 ```
 
 ### 1. Create `srcs/.env` from the example
@@ -127,7 +128,9 @@ The template contains the variables expected by the project:
 
 ```dotenv
 # Domain
-DOMAIN_NAME=example.42.fr
+DOMAIN_NAME=tavdiiev.42.fr
+
+`DOMAIN_NAME` is set to `tavdiiev.42.fr` because this domain is used consistently throughout the project, including the NGINX configuration, TLS certificate, and local hosts configuration.
 
 # MariaDB
 DB_NAME=wordpress
@@ -140,8 +143,11 @@ WP_ADMIN_EMAIL=example_user@example.com
 WP_USER=example_user2
 WP_USER_EMAIL=example_user2@example.com
 
+```markdown
 # Canonical WordPress URL
-WP_URL=https://example.42.fr
+WP_URL=https://tavdiiev.42.fr
+
+This is the URL used by WordPress for the website. The VirtualBox forwarding port (`:8443`) is not included because it is only used to access the VM from the host machine.
 ```
 
 `WP_ADMIN_USER` must not contain `admin` or `administrator`, case-insensitively.
