@@ -335,33 +335,6 @@ The real `.env` and secret files should appear as ignored files (`!!`).
 
 The certificate and private key are inside the ignored `srcs/requirements/nginx/tools/` directory, which should also appear as an ignored path (`!!`).
 
-### 5. Keeping the examples in sync
-
-If a project variable or required secret is added or renamed, update the corresponding `*.example` template as well.
-
-For example:
-
-- adding a variable to `srcs/.env` → update `srcs/.env.example`
-- adding a Docker secret → add the corresponding `secrets/*.txt.example`
-
-The `.gitignore` is configured so that:
-
-```text
-srcs/.env
-secrets/*.txt
-```
-
-remain excluded from Git, while:
-
-```text
-srcs/.env.example
-secrets/*.txt.example
-```
-
-remain trackable.
-
-This allows a fresh clone to contain everything needed to understand and reproduce the configuration without committing any real credentials.
-
 ## School Environment and Browser Access
 
 The project itself uses:
