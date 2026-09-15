@@ -391,13 +391,13 @@ A browser can access the project through the host-side VirtualBox forwarding por
 
 ```text
 https://tavdiiev.42.fr:8443/
-
+```
 The :8443 port is used only for forwarding traffic from the school host machine to port 443 inside the VM. It is not part of the project's canonical WordPress URL.
 
 The WordPress home and siteurl options, as well as WP_URL, should remain:
-
+```text
 https://tavdiiev.42.fr
-
+```
 ## Initial WordPress Installation
 
 WordPress installation is automated.
