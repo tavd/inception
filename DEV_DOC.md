@@ -387,27 +387,16 @@ NGINX
 WordPress
 ```
 
-A browser request to:
+A browser can access the project through the host-side VirtualBox forwarding port:
 
 ```text
 https://tavdiiev.42.fr:8443/
-```
 
-may be redirected by WordPress to the canonical URL:
+The :8443 port is used only for forwarding traffic from the school host machine to port 443 inside the VM. It is not part of the project's canonical WordPress URL.
 
-```text
-https://tavdiiev.42.fr/
-```
+The WordPress home and siteurl options, as well as WP_URL, should remain:
 
-because the stored `home` and `siteurl` values do not contain `:8443`.
-
-If browser testing specifically through `8443` is required, the `home` and `siteurl` WordPress options can temporarily be changed to include `:8443`. They should then be restored to:
-
-```text
 https://tavdiiev.42.fr
-```
-
-Do not put `:8443` into the final `WP_URL`.
 
 ## Initial WordPress Installation
 
