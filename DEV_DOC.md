@@ -393,6 +393,16 @@ A browser can access the project through the host-side VirtualBox forwarding por
 https://tavdiiev.42.fr:8443/
 ```
 
+If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
+
+```bash
+google-chrome \
+    --user-data-dir=/tmp/chrome-test \
+    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+
+`--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
+
 When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` option is configured as:
 
 ```text
