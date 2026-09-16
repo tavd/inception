@@ -1055,18 +1055,36 @@ This can happen because WordPress is configured with:
 ```text
 https://tavdiiev.42.fr
 ```
-rather than:
+
+as its `home` URL, while the browser is accessing the site through the host-side forwarding port:
 
 ```text
 https://tavdiiev.42.fr:8443
 ```
-For browser testing through `:8443`, temporarily set both home and siteurl to the :8443 URL, as described in the browser testing section.
 
-After testing, restore both values to:
+For browser testing through `:8443`, temporarily set the `home` option to:
+
+```text
+https://tavdiiev.42.fr:8443
+```
+
+The `siteurl` option does not need to be changed for this specific port-related redirect test.
+
+If the school host cannot resolve `tavdiiev.42.fr`, use the Chrome command described in the browser testing section.
+
+After testing, restore `home` to:
+
 ```text
 https://tavdiiev.42.fr
 ```
-Do not permanently change WP_URL to include `:8443`.
+
+Keep `siteurl` as:
+
+```text
+https://tavdiiev.42.fr
+```
+
+Do not permanently change `WP_URL` to include `:8443`.
 
 ## Cleaning Project
 
