@@ -1036,23 +1036,25 @@ Server: nginx
 
 This tests the host-to-VM forwarded connection without changing the canonical WordPress URL.
 
-### Browser redirects from port 8443
+###Browser redirects from port 8443
 
 This can happen because WordPress is configured with:
 
 ```text
 https://tavdiiev.42.fr
 ```
-
 rather than:
 
 ```text
 https://tavdiiev.42.fr:8443
 ```
+For browser testing through `:8443`, temporarily set both home and siteurl to the :8443 URL, as described in the browser testing section.
 
-This is expected.
-
-Do not permanently change `WP_URL` to include `:8443`.
+After testing, restore both values to:
+```text
+https://tavdiiev.42.fr
+```
+Do not permanently change WP_URL to include `:8443`.
 
 ## Cleaning Project
 
