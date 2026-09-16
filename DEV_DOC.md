@@ -1036,7 +1036,7 @@ Server: nginx
 
 This tests the host-to-VM forwarded connection without changing the canonical WordPress URL.
 
-###Browser redirects from port 8443
+### Browser redirects from port 8443
 
 This can happen because WordPress is configured with:
 
