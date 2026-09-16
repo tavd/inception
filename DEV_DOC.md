@@ -393,15 +393,27 @@ A browser can access the project through the host-side VirtualBox forwarding por
 https://tavdiiev.42.fr:8443/
 ```
 
-When accessing the site through `:8443`, WordPress redirects to the URL without the forwarding port because its `home` and `siteurl` options use the canonical URL.
+When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` option is configured as:
 
-For browser testing through `:8443`, temporarily set both `home` and `siteurl` to:
+```text
+https://tavdiiev.42.fr
+```
+
+For browser testing through `:8443`, temporarily set the `home` option to:
 
 ```text
 https://tavdiiev.42.fr:8443
 ```
 
-After testing, restore both values to:
+The `siteurl` option does not need to be changed for this specific port-related canonical redirect test.
+
+After testing, restore `home` to:
+
+```text
+https://tavdiiev.42.fr
+```
+
+Keep `siteurl` as:
 
 ```text
 https://tavdiiev.42.fr
