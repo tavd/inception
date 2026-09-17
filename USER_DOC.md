@@ -179,12 +179,12 @@ In the school virtual-machine environment, VirtualBox forwards:
 
 ```
 Host 127.0.0.1:8443
-│
-▼
-VM port 443
-│
-▼
-NGINX
+	│
+	▼
+   VM port 443
+	│
+	▼
+      NGINX
 ```
 
 Therefore, `8443` is only the local VirtualBox forwarding port. It is not part of the project's actual NGINX or WordPress configuration.
