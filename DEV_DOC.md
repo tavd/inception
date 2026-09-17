@@ -382,7 +382,7 @@ A successful response should indicate that the request reaches NGINX on port 443
 
 ### Testing from the school host
 
-When testing from the school host, the recommended clean test is:
+When testing from the school host, the recommended test is:
 
 ```bash
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/

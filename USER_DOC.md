@@ -12,6 +12,7 @@ The stack consists of three services:
 
 The services communicate through a private Docker network.
 
+```text
 Browser
    │
    │ HTTPS :443
@@ -25,7 +26,7 @@ WordPress / PHP-FPM
    │ MySQL :3306
    ▼
 MariaDB
-
+```
 
 Only NGINX is exposed to the outside. WordPress/PHP-FPM and MariaDB are used internally by the stack.
 
@@ -110,18 +111,18 @@ NGINX handles the HTTPS connection and forwards PHP requests to the WordPress co
 When testing from the school host machine, the VirtualBox forwarding configuration may use:
 
 ```text
-Host 127.0.0.1:8443
+ Host 127.0.0.1:8443
         │
         ▼
-VM port 443
+   VM port 443
         │
         ▼
-NGINX
+      NGINX
 ```
 
 Because WordPress uses the canonical URL `https://tavdiiev.42.fr`, opening the forwarded `:8443` URL in a browser may cause WordPress to redirect to the standard HTTPS URL without `:8443`.
 
-For a clean test from the school host, use:
+For a test from the school host, use:
 
 ```bash
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
@@ -192,10 +193,10 @@ The usernames and other WordPress settings are configured through the project's 
 For example:
 
 ```text
-WP_ADMIN_USER=tavd_user1
-WP_ADMIN_EMAIL=some_email@gmail.com
-WP_USER=tavd_user2
-WP_USER_EMAIL=some_email2@gmail.com
+WP_ADMIN_USER=example_user
+WP_ADMIN_EMAIL=example_user@example.com
+WP_USER=example_user2
+WP_USER_EMAIL=example_user2@example.com
 ```
 
 During the first startup, WP-CLI uses these values and the Docker secrets to install WordPress and create the two WordPress accounts automatically.
