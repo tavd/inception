@@ -179,12 +179,12 @@ In the school virtual-machine environment, VirtualBox forwards:
 
 ```
 Host 127.0.0.1:8443
-	│
-	▼
-   VM port 443
-	│
-	▼
-      NGINX
+     │
+     ▼
+ VM port 443
+     │
+     ▼
+   NGINX
 
 ```
 
