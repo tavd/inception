@@ -145,9 +145,9 @@ WP_USER_EMAIL=example_user2@example.com
 
 # Canonical WordPress URL
 WP_URL=https://tavdiiev.42.fr
-
-This is the URL used by WordPress for the website. The VirtualBox forwarding port (`:8443`) is not included because it is only used to access the VM from the host machine.
 ```
+This is the URL used by WordPress for the website. The VirtualBox forwarding port (`:8443`) is not included because it is only used to access the VM from the host machine.
+
 > `WP_ADMIN_USER` must not contain `admin` or `administrator`, case-insensitively.
 > Passwords are **not stored in** **`.env`**. They are provided separately through Docker secrets.
 > Keep the variable names unchanged because they are used by the Docker Compose configuration and startup scripts.

@@ -18,11 +18,8 @@ The resulting architecture is:
 
 ```text
                         HTTPS :443
-
-                              │
-
-                              ▼
-
+                            │
+                            ▼
                        ┌─────────┐
                        │  NGINX  │
                        └────┬────┘
@@ -179,10 +176,10 @@ DB_NAME=wordpress
 DB_USER=wpuser
 DOMAIN_NAME=tavdiiev.42.fr
 WP_TITLE=Inception
-WP_ADMIN_USER=tavd_user1
-WP_ADMIN_EMAIL=some_email@gmail.com
-WP_USER=tavd_user2
-WP_USER_EMAIL=some_email2@gmail.com
+WP_ADMIN_USER=example_user
+WP_ADMIN_EMAIL=example_user@example.com
+WP_USER=example_user2
+WP_USER_EMAIL=example_user2@example.com
 WP_URL=https://tavdiiev.42.fr
 ```
 
@@ -334,11 +331,11 @@ docker exec wordpress wp user list --allow-root
 ### Requirements
 
 The following software is required:
-
 * Docker
 * Docker Compose
 * Git
 * Bash
+* mkcert
 * A Linux environment capable of running Docker
 
 ### Clone the repository
@@ -361,10 +358,10 @@ DOMAIN_NAME=tavdiiev.42.fr
 DB_NAME=wordpress
 DB_USER=wpuser
 WP_TITLE=Inception
-WP_ADMIN_USER=tavd_user1
-WP_ADMIN_EMAIL=some_email@gmail.com
-WP_USER=tavd_user2
-WP_USER_EMAIL=some_email2@gmail.com
+WP_ADMIN_USER=example_user
+WP_ADMIN_EMAIL=example_user@example.com
+WP_USER=example_user2
+WP_USER_EMAIL=example_user2@example.com
 WP_URL=https://tavdiiev.42.fr
 ```
 
