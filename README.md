@@ -346,32 +346,53 @@ Clone the repository and enter the project directory:
 git clone <repository-url>
 cd inception
 ```
+## Configure the environment
 
-### Configure the environment
-
-The Compose configuration uses `srcs/.env` for non-sensitive configuration.
-
-A typical configuration contains:
-
-```env
-DOMAIN_NAME=tavdiiev.42.fr
-DB_NAME=wordpress
-DB_USER=wpuser
-WP_TITLE=Inception
-WP_ADMIN_USER=example_user
-WP_ADMIN_EMAIL=example_user@example.com
-WP_USER=example_user2
-WP_USER_EMAIL=example_user2@example.com
-WP_URL=https://tavdiiev.42.fr
-```
-
-The local `.env` file is environment-specific and must not be committed to the repository.
-
-The TLS certificate and private key are also environment-specific files and must be provided locally.
-
-The project expects these secret files:
+The repository provides an environment template at:
 
 ```text
+srcs/.env.example
+```
+
+Copy it to `srcs/.env` and adjust the values for the local environment:
+
+```bash
+cp srcs/.env.example srcs/.env
+```
+
+The `.env` file contains non-sensitive configuration such as:
+
+* domain name
+* database name and user
+* WordPress site title
+* WordPress administrator and regular user names and email addresses
+* canonical WordPress URL
+
+Passwords are **not stored in** **`.env`**. They are provided separately through Docker secrets.
+
+The repository provides example templates for the required secret files:
+
+```text
+secrets/
+├── db_password.txt.example
+├── db_root_password.txt.example
+├── wp_admin_password.txt.example
+└── wp_user_password.txt.example
+```
+
+Copy each example file to the corresponding secret file and replace the example value with the desired password:
+
+```bash
+cp secrets/db_password.txt.example secrets/db_password.txt
+cp secrets/db_root_password.txt.example secrets/db_root_password.txt
+cp secrets/wp_admin_password.txt.example secrets/wp_admin_password.txt
+cp secrets/wp_user_password.txt.example secrets/wp_user_password.txt
+```
+
+The resulting files should be:
+
+```text
+srcs/.env
 secrets/
 ├── db_password.txt
 ├── db_root_password.txt
@@ -379,7 +400,9 @@ secrets/
 └── wp_user_password.txt
 ```
 
-These files must not be committed to Git.
+These local configuration and secret files are excluded from Git and must not be committed to the repository.
+
+The TLS certificate and private key are also environment-specific files and must be provided locally.
 
 ### Build and start the infrastructure
 

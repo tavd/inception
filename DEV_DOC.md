@@ -144,7 +144,6 @@ WP_USER=example_user2
 WP_USER_EMAIL=example_user2@example.com
 
 # Canonical WordPress URL
-# The VirtualBox forwarding port (:8443) is only used for local testing and is not part of the WordPress URL.
 WP_URL=https://tavdiiev.42.fr
 ```
 
