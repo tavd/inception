@@ -367,6 +367,11 @@ nginx
 wordpress
 mariadb
 ```
+The VM resolves the domain locally through `/etc/hosts`:
+
+```text
+127.0.0.1    localhost tavdiiev.42.fr
+```
 
 Then test the HTTPS entry point directly on the VM:
 
@@ -375,11 +380,7 @@ curl -kI https://tavdiiev.42.fr/
 ```
 A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
 
-The VM resolves the domain locally:
-
-```text
-127.0.0.1    localhost tavdiiev.42.fr
-```
+### Testing from the school host
 
 When testing from the school host, the recommended clean test is:
 
@@ -410,6 +411,7 @@ NGINX
     ▼
 WordPress
 ```
+### Browser testing from the school host
 
 A browser can access the project through the host-side VirtualBox forwarding port:
 
