@@ -371,13 +371,9 @@ mariadb
 Then test the HTTPS entry point directly on the VM:
 
 ```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:443/
+curl -kI https://tavdiiev.42.fr/
 ```
-Here, `127.0.0.1:443` refers directly to the VM's HTTPS port. The VirtualBox forwarding port `8443` is not involved.
-
 A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
-
-Note: The exact response should be verified when testing the project in the school VM.
 
 The VM resolves the domain locally:
 
