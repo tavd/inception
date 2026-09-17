@@ -351,6 +351,34 @@ Host 127.0.0.1:8443 → VM 443
 
 Therefore `8443` is not part of the project's actual NGINX or WordPress configuration.
 
+## Testing inside the VM
+
+The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
+
+After starting the project, verify that the containers are running:
+
+```bash
+docker ps
+```
+The expected containers are:
+
+```text
+nginx
+wordpress
+mariadb
+```
+
+Then test the HTTPS entry point directly on the VM:
+
+```bash
+curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:443/
+```
+Here, `127.0.0.1:443` refers directly to the VM's HTTPS port. The VirtualBox forwarding port `8443` is not involved.
+
+A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
+
+Note: The exact response should be verified when testing the project in the school VM.
+
 The VM resolves the domain locally:
 
 ```text
@@ -370,6 +398,7 @@ HTTP/1.1 200 OK
 ```
 
 confirms the path:
+
 
 ```text
 School host

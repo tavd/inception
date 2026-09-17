@@ -402,9 +402,9 @@ secrets/
 
 These local configuration and secret files are excluded from Git and must not be committed to the repository.
 
-The TLS certificate and private key are also environment-specific files and must be provided locally.
+The NGINX HTTPS configuration also requires a local TLS certificate and private key. These files are excluded from Git and must be generated locally before starting the containers. See DEV_DOC.md for the certificate generation procedure using mkcert.
 
-### Build and start the infrastructure
+## Build and start the infrastructure
 
 To build the images and start the services:
 
@@ -452,27 +452,42 @@ https://tavdiiev.42.fr/
 
 Only NGINX is exposed through port 443.
 
-### School virtual-machine testing
+### School virtual-machine environment
 
-When the project is running inside the school Debian virtual machine, VirtualBox may forward:
+When the project is running inside the school Debian virtual machine, VirtualBox forwards:
 
 ```text
 Host 127.0.0.1:8443 → VM port 443
 ```
 
-The project itself still uses HTTPS port 443 and the configured WordPress URL remains:
+The project itself still uses HTTPS port 443, and the configured WordPress URL remains:
 
 ```text
 https://tavdiiev.42.fr
 ```
+The procedures for starting and testing the project inside the VM are described in DEV_DOC.md.
 
-For a clean test from the school host, use:
+#### Browser testing from the school host
+
+The site can be accessed from the school host through the VirtualBox forwarding port:
+
+```text
+https://tavdiiev.42.fr:8443/
+```
+
+If the school host cannot resolve tavdiiev.42.fr, use the Chrome setup described in DEV_DOC.md.
+
+When testing through :8443, WordPress may redirect to the canonical URL without the forwarding port. See DEV_DOC.md for the temporary home setting required for browser testing.
+
+#### Command-line testing from the school host
+
+For a direct HTTP response check, use:
 
 ```bash
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
 ```
 
-A successful `HTTP/1.1 200 OK` response confirms that the request reaches NGINX through the forwarded port and is served by WordPress.
+A successful HTTP/1.1 200 OK response confirms that the request reaches NGINX through the forwarded port and is served successfully.
 
 ### Stop the infrastructure
 
