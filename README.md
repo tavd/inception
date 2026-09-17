@@ -140,7 +140,7 @@ The configured WordPress URL is:
 https://tavdiiev.42.fr
 ```
 
-In the school virtual-machine environment, VirtualBox may forward host port 8443 to the VM's port 443 for testing. Port 8443 is only a host-side forwarding port and is not part of the project's configured WordPress URL.
+In the school virtual-machine environment, VirtualBox forwards host port 8443 to the VM's port 443 for testing. Port 8443 is only a host-side forwarding port and is not part of the project's configured WordPress URL.
 
 ### Base images
 

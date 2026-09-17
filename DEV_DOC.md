@@ -128,9 +128,9 @@ The template contains the variables expected by the project:
 
 ```dotenv
 # Domain
+# Used consistently throughout the project, including NGINX configuration,
+# the TLS certificate, and the local hosts configuration.
 DOMAIN_NAME=tavdiiev.42.fr
-
-`DOMAIN_NAME` is set to `tavdiiev.42.fr` because this domain is used consistently throughout the project, including the NGINX configuration, TLS certificate, and local hosts configuration.
 
 # MariaDB
 DB_NAME=wordpress
@@ -144,9 +144,9 @@ WP_USER=example_user2
 WP_USER_EMAIL=example_user2@example.com
 
 # Canonical WordPress URL
+# The VirtualBox forwarding port (:8443) is only used for local testing and is not part of the WordPress URL.
 WP_URL=https://tavdiiev.42.fr
 ```
-This is the URL used by WordPress for the website. The VirtualBox forwarding port (`:8443`) is not included because it is only used to access the VM from the host machine.
 
 > `WP_ADMIN_USER` must not contain `admin` or `administrator`, case-insensitively.
 > Passwords are **not stored in** **`.env`**. They are provided separately through Docker secrets.
