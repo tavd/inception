@@ -411,48 +411,52 @@ NGINX
     ▼
 WordPress
 ```
-### Browser testing from the school host
+**### Browser testing from the school host**
 
 A browser can access the project through the host-side VirtualBox forwarding port:
 
 ```text
+
 https://tavdiiev.42.fr:8443/
+
 ```
 
 If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
 
 ```bash
+
 google-chrome \
     --user-data-dir=/tmp/chrome-test \
     --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+
 ```
 
 `--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
 
-When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` option is configured as:
+When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` and `siteurl` options are normally configured as:
 
 ```text
+
 https://tavdiiev.42.fr
+
 ```
 
-For browser testing through `:8443`, temporarily set the `home` option to:
+For browser testing through `:8443`, temporarily set **both** the `home` and `siteurl` options to:
 
 ```text
+
 https://tavdiiev.42.fr:8443
+
 ```
 
-The `siteurl` option does not need to be changed for this specific port-related canonical redirect test.
+This is necessary when testing the full WordPress site from the school host, including `/wp-admin/` and the WordPress login page. The `siteurl` option is used for WordPress administration and login URLs, so changing only `home` is sufficient for the public site but not for the complete admin/login flow.
 
-After testing, restore `home` to:
-
-```text
-https://tavdiiev.42.fr
-```
-
-Keep `siteurl` as:
+After testing, restore **both** `home` and `siteurl` to:
 
 ```text
+
 https://tavdiiev.42.fr
+
 ```
 
 ## Initial WordPress Installation

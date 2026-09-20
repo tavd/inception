@@ -208,16 +208,20 @@ This sends the request to the school host's forwarded port and supplies the expe
 
 The browser URL used through the school host's VirtualBox forwarding is:
 
-```
+```text
+
 https://tavdiiev.42.fr:8443/
+
 ```
 
 If the school host cannot resolve `tavdiiev.42.fr` normally, Chrome can be started with a temporary host-resolution rule:
 
 ```bash
-google-chrome 
---user-data-dir=/tmp/chrome-test 
---host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+
+google-chrome \
+    --user-data-dir=/tmp/chrome-test \
+    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+
 ```
 
 The `--host-resolver-rules` option makes Chrome resolve `tavdiiev.42.fr` to the school host's `127.0.0.1`, allowing the request to reach the VirtualBox forwarding port.
@@ -226,27 +230,43 @@ The separate `--user-data-dir` creates a temporary Chrome profile for this test.
 
 The browser then accesses:
 
-```
+```text
+
 https://tavdiiev.42.fr:8443/
-```
-
-Because WordPress uses the canonical URL:
 
 ```
+
+Because WordPress normally uses the canonical URL:
+
+```text
+
 https://tavdiiev.42.fr
+
 ```
 
 WordPress may redirect the browser from the forwarded `:8443` URL to the canonical URL without `:8443`.
 
-If browser access through `:8443` specifically needs to be tested, the WordPress `home` option can temporarily be changed to include `:8443`. After the test, restore it to:
+For browser testing through `:8443`, temporarily change **both** the WordPress `home` and `siteurl` options to:
+
+```text
+
+https://tavdiiev.42.fr:8443
 
 ```
+
+This is required for full browser testing from the school host, including the public site, `/wp-admin/`, and the WordPress login page.
+
+The `home` option controls the public site URL, while `siteurl` is also used for WordPress administration and login URLs. Therefore, changing only `home` is sufficient for testing the public homepage, but not for the complete WordPress admin/login flow.
+
+After testing, restore **both** options to:
+
+```text
+
 https://tavdiiev.42.fr
+
 ```
 
-For this specific port-related test, `siteurl` does not need to be changed.
-
-Do not add `:8443` to `WP_URL` in the project's final configuration.
+Do not add `:8443` to `WP_URL` in the project's final configuration. `:8443` is only the school host's VirtualBox forwarding port; the project itself uses HTTPS on port 443.
 
 ## Accessing the Website
 
