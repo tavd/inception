@@ -11,7 +11,6 @@ The project consists of three Docker services:
 
 The services communicate through a private Docker bridge network named `inception`.
 The architecture is:
-
 ```text
 Browser
    │
@@ -27,7 +26,6 @@ WordPress / PHP-FPM
    ▼
  MariaDB
 ```
-
 Only NGINX publishes a port. WordPress/PHP-FPM and MariaDB are internal services.
 
 ## Project Structure
@@ -69,7 +67,6 @@ inception/
             └── tools/
                 └── db.sh
 ```
-
 The `.env`, secret files, certificate, and private key are local environment-specific files and are excluded from Git.
 
 ## Prerequisites
@@ -102,9 +99,7 @@ The example files contain placeholders only and must be replaced with the real l
 git clone <repository-url>
 cd <project-directory>
 ```
-
 ### 1. Create `srcs/.env` from the example
-
 Copy the tracked environment template:
 ```bash
 cp srcs/.env.example srcs/.env
@@ -217,24 +212,20 @@ tavdiiev.42.fr.pem
 tavdiiev.42.fr-key.pem
 ```
 Rename them to the filenames expected by the NGINX configuration:
-
 ```bash
 mv tavdiiev.42.fr.pem tavdiiev.42.fr.crt
 mv tavdiiev.42.fr-key.pem tavdiiev.42.fr.key
 ```
 The directory should then contain:
-
 ```text
 tavdiiev.42.fr.crt
 tavdiiev.42.fr.key
 ```
 The certificate and private key are mounted into the NGINX container by Docker Compose:
-
 ```yaml
 - ./requirements/nginx/tools:/etc/nginx/ssl/
 ```
 Inside the container, NGINX therefore uses:
-
 ```text
 /etc/nginx/ssl/tavdiiev.42.fr.crt
 /etc/nginx/ssl/tavdiiev.42.fr.key
@@ -313,8 +304,6 @@ A successful response such as:
 HTTP/1.1 200 OK
 ```
 confirms the path:
-
-
 ```text
 School host
     │
@@ -332,40 +321,29 @@ WordPress
 ### Browser testing from the school host
 
 A browser can access the project through the host-side VirtualBox forwarding port:
-
 ```text
-
 https://tavdiiev.42.fr:8443/
-
 ```
 If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
 ```bash
-
 google-chrome \
     --user-data-dir=/tmp/chrome-test \
     --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
-
 ```
 `--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
 When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` and `siteurl` options are normally configured as:
 ```text
-
 https://tavdiiev.42.fr
-
 ```
 For browser testing through `:8443`, temporarily set **both** the `home` and `siteurl` options to:
 ```text
 https://tavdiiev.42.fr:8443
-
 ```
 This is necessary when testing the full WordPress site from the school host, including `/wp-admin/` and the WordPress login page. The `siteurl` option is used for WordPress administration and login URLs, so changing only `home` is sufficient for the public site but not for the complete admin/login flow.
 After testing, restore **both** `home` and `siteurl` to:
-
 ```text
 https://tavdiiev.42.fr
-
 ```
-
 ## Initial WordPress Installation
 
 WordPress installation is automated.
@@ -380,7 +358,6 @@ The script performs the following operations:
 4. If WordPress is not installed, runs `wp core install`.
 5. Creates the configured normal/subscriber user with `wp user create`.
 6. Starts PHP-FPM in the foreground.
-
 The relevant logic is:
 ```text
 wp.sh
@@ -398,7 +375,6 @@ wp.sh
   └── php-fpm85 -F
 ```
 The administrator password is read from:
-
 ```text
 /run/secrets/wp_admin_password
 ```
