@@ -1159,29 +1159,24 @@ Check the services:
 docker ps
 ```
 Check WordPress:
-
 ```bash
 docker exec wordpress wp core is-installed --allow-root
 ```
 Check the users:
-
 ```bash
 docker exec wordpress wp user list --allow-root
 ```
 Check logs when needed:
-
 ```bash
 docker logs wordpress
 docker logs nginx
 docker logs mariadb
 ```
 For an HTTPS test inside the VM:
-
 ```bash
 curl -kI https://tavdiiev.42.fr/
 ```
 For an HTTPS test from the school host:
-
 ```bash
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
 ```
