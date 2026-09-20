@@ -79,7 +79,9 @@ The development environment requires:
 * mkcert
 * A Linux environment capable of running Docker
 The current project uses Alpine Linux 3.23 as the base image for all three services.
+
 ## Setting Up Environment From Scratch
+
 After cloning the repository, the local environment-specific files must be created before the first build.
 
 The real `.env` and secret files are excluded from Git:
@@ -100,6 +102,7 @@ git clone <repository-url>
 cd <project-directory>
 ```
 ### 1. Create `srcs/.env` from the example
+
 Copy the tracked environment template:
 ```bash
 cp srcs/.env.example srcs/.env
@@ -128,7 +131,9 @@ WP_URL=https://tavdiiev.42.fr
 > Keep the variable names unchanged because they are used by the Docker Compose configuration and startup scripts.
 > The canonical `WP_URL` must not contain the school VirtualBox forwarding port such as `:8443`. The project URL remains: `https://tavdiiev.42.fr`
 > Port `8443` is only used as a host-side forwarding port in the school VirtualBox environment.
+
 ### 2. Create the secret files from the examples
+
 The repository contains tracked templates for the four required Docker secrets:
 ```text
 secrets/
@@ -257,92 +262,47 @@ git status --short --ignored
 The real `.env` and secret files should appear as ignored files (`!!`).
 The certificate and private key are inside the ignored `srcs/requirements/nginx/tools/` directory, which should also appear as an ignored path (`!!`).
 
-## School Environment and Browser Access
+## Building Project
 
-The project itself uses:
-```text
-NGINX :443
-WP_URL=https://tavdiiev.42.fr
+From the project root:
+```bash
+make
 ```
-In the school VM setup, VirtualBox forwards:
-```text
-Host 127.0.0.1:8443 → VM 443
+The Makefile creates the required persistent-data directories if necessary and starts Docker Compose.
+To rebuild the images:
+```bash
+make build
 ```
-Therefore `8443` is not part of the project's actual NGINX or WordPress configuration.
+The Compose command uses:
 
-## Testing inside the VM
+```text
+srcs/docker-compose.yml
+```
+and:
+```text
+srcs/.env
+```
 
-The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
-After starting the project, verify that the containers are running:
+## Launching Project
+
+The normal startup command is:
+```bash
+make
+```
+or:
+```bash
+make all
+```
+The services are started in detached mode.
+Check them with:
 ```bash
 docker ps
 ```
-The expected containers are:
+Expected containers:
 ```text
 nginx
 wordpress
 mariadb
-```
-The VM resolves the domain locally through `/etc/hosts`:
-```text
-127.0.0.1    localhost tavdiiev.42.fr
-```
-Then test the HTTPS entry point directly on the VM:
-```bash
-curl -kI https://tavdiiev.42.fr/
-```
-A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
-
-### Testing from the school host
-
-When testing from the school host, the recommended test is:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-A successful response such as:
-```text
-HTTP/1.1 200 OK
-```
-confirms the path:
-```text
-School host
-    │
-    │ 127.0.0.1:8443
-    ▼
-VirtualBox
-    │
-    │ VM :443
-    ▼
-NGINX
-    │
-    ▼
-WordPress
-```
-### Browser testing from the school host
-
-A browser can access the project through the host-side VirtualBox forwarding port:
-```text
-https://tavdiiev.42.fr:8443/
-```
-If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
-```bash
-google-chrome \
-    --user-data-dir=/tmp/chrome-test \
-    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
-```
-`--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
-When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` and `siteurl` options are normally configured as:
-```text
-https://tavdiiev.42.fr
-```
-For browser testing through `:8443`, temporarily set **both** the `home` and `siteurl` options to:
-```text
-https://tavdiiev.42.fr:8443
-```
-This is necessary when testing the full WordPress site from the school host, including `/wp-admin/` and the WordPress login page. The `siteurl` option is used for WordPress administration and login URLs, so changing only `home` is sufficient for the public site but not for the complete admin/login flow.
-After testing, restore **both** `home` and `siteurl` to:
-```text
-https://tavdiiev.42.fr
 ```
 ## Initial WordPress Installation
 
@@ -418,47 +378,92 @@ List users:
 docker exec wordpress wp user list --allow-root
 ```
 
-## Building Project
+## Testing inside the VM
 
-From the project root:
-```bash
-make
-```
-The Makefile creates the required persistent-data directories if necessary and starts Docker Compose.
-To rebuild the images:
-```bash
-make build
-```
-The Compose command uses:
-
-```text
-srcs/docker-compose.yml
-```
-and:
-```text
-srcs/.env
-```
-
-## Launching Project
-
-The normal startup command is:
-```bash
-make
-```
-or:
-```bash
-make all
-```
-The services are started in detached mode.
-Check them with:
+The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
+After starting the project, verify that the containers are running:
 ```bash
 docker ps
 ```
-Expected containers:
+The expected containers are:
 ```text
 nginx
 wordpress
 mariadb
+```
+The VM resolves the domain locally through `/etc/hosts`:
+```text
+127.0.0.1    localhost tavdiiev.42.fr
+```
+Then test the HTTPS entry point directly on the VM:
+```bash
+curl -kI https://tavdiiev.42.fr/
+```
+A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
+
+## School Environment and Browser Access
+
+The project itself uses:
+```text
+NGINX :443
+WP_URL=https://tavdiiev.42.fr
+```
+In the school VM setup, VirtualBox forwards:
+```text
+Host 127.0.0.1:8443 → VM 443
+```
+Therefore `8443` is not part of the project's actual NGINX or WordPress configuration.
+
+### Testing from the school host
+
+When testing from the school host, the recommended test is:
+```bash
+curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
+```
+A successful response such as:
+```text
+HTTP/1.1 200 OK
+```
+confirms the path:
+```text
+School host
+    │
+    │ 127.0.0.1:8443
+    ▼
+VirtualBox
+    │
+    │ VM :443
+    ▼
+NGINX
+    │
+    ▼
+WordPress
+```
+### Browser testing from the school host
+
+A browser can access the project through the host-side VirtualBox forwarding port:
+```text
+https://tavdiiev.42.fr:8443/
+```
+If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
+```bash
+google-chrome \
+    --user-data-dir=/tmp/chrome-test \
+    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
+```
+`--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
+When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` and `siteurl` options are normally configured as:
+```text
+https://tavdiiev.42.fr
+```
+For browser testing through `:8443`, temporarily set **both** the `home` and `siteurl` options to:
+```text
+https://tavdiiev.42.fr:8443
+```
+This is necessary when testing the full WordPress site from the school host, including `/wp-admin/` and the WordPress login page. The `siteurl` option is used for WordPress administration and login URLs, so changing only `home` is sufficient for the public site but not for the complete admin/login flow.
+After testing, restore **both** `home` and `siteurl` to:
+```text
+https://tavdiiev.42.fr
 ```
 
 ## Checking Docker Network
@@ -539,7 +544,7 @@ Builds the images and starts the services.
 ### `make down`
 
 Stops and removes the Compose containers and network.
-Persistent data is normally preserved.
+Persistent data is preserved unless it is separately deleted.
 
 ### `make re`
 
@@ -568,12 +573,10 @@ Build and start:
 docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
 ```
 Stop and remove containers:
-
 ```bash
 docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env down
 ```
 Avoid:
-
 ```bash
 docker-compose down -v
 ```
@@ -624,6 +627,7 @@ Persistent MariaDB data is stored under:
 /home/${USER}/data/mariadb
 ```
 This data survives normal container recreation.
+Removing the containers with `make down` does not remove this persistent data.
 Deleting the MariaDB storage can destroy the WordPress database, including users and settings.
 
 ## NGINX Configuration
@@ -846,26 +850,23 @@ This can happen because WordPress is configured with:
 ```text
 https://tavdiiev.42.fr
 ```
-as its `home` URL, while the browser is accessing the site through the host-side forwarding port:
+as its canonical URL, while the browser is accessing the site through the host-side forwarding port:
 ```text
 https://tavdiiev.42.fr:8443
 ```
-For browser testing through `:8443`, temporarily set the `home` option to:
+For browser testing through `:8443`, temporarily set both the home and siteurl options to:
 ```text
 https://tavdiiev.42.fr:8443
 ```
-The `siteurl` option does not need to be changed for this specific port-related redirect test.
-If the school host cannot resolve `tavdiiev.42.fr`, use the Chrome command described in the browser testing section.
-After testing, restore `home` to:
-```text
-https://tavdiiev.42.fr
-```
-Keep `siteurl` as:
+This allows WordPress to generate links and redirects using the host-side forwarding port during the browser test.
 
+If the school host cannot resolve tavdiiev.42.fr, use the Chrome command described in the browser testing section.
+
+After testing, restore both home and siteurl to the canonical URL:
 ```text
 https://tavdiiev.42.fr
 ```
-Do not permanently change `WP_URL` to include `:8443`.
+Do not permanently change WP_URL to include `:8443`. The `:8443` port is only used by the school host's VirtualBox port forwarding and is not part of the project's canonical WordPress URL.
 
 ## Cleaning Project
 
@@ -874,9 +875,12 @@ In particular:
 ```bash
 docker-compose down -v
 ```
-removes Docker volumes.
-The project's `make clean` and `make fclean` targets should also be treated as potentially destructive operations.
-
+removes the project's named Docker volumes. The project's persistent data is stored in the host directories configured by the volume driver_opts:
+```text
+/home/${USER}/data/wordpress
+/home/${USER}/data/mariadb
+```
+The project's make clean and make fclean targets should also be treated as potentially destructive operations because they explicitly remove persistent project data.
 Deleting:
 ```text
 /home/${USER}/data/mariadb
