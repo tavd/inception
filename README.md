@@ -467,17 +467,29 @@ https://tavdiiev.42.fr
 ```
 The procedures for starting and testing the project inside the VM are described in DEV_DOC.md.
 
-#### Browser testing from the school host
+**#### Browser testing from the school host**
 
 The site can be accessed from the school host through the VirtualBox forwarding port:
 
 ```text
+
 https://tavdiiev.42.fr:8443/
+
 ```
 
-If the school host cannot resolve tavdiiev.42.fr, use the Chrome setup described in DEV_DOC.md.
+If the school host cannot resolve `tavdiiev.42.fr`, use the Chrome setup described in `DEV_DOC.md`.
 
-When testing through :8443, WordPress may redirect to the canonical URL without the forwarding port. See DEV_DOC.md for the temporary home setting required for browser testing.
+When testing through `:8443`, WordPress may redirect to the canonical URL without the forwarding port. For full browser testing through `:8443`, including `/wp-admin/` and the WordPress login page, temporarily set both the WordPress `home` and `siteurl` options to include `:8443`. See `DEV_DOC.md` for the exact procedure.
+
+After testing, restore both options to the canonical URL:
+
+```text
+
+https://tavdiiev.42.fr
+
+```
+
+Do not add `:8443` to `WP_URL` in the project's final configuration.
 
 #### Command-line testing from the school host
 

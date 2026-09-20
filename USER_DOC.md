@@ -3,9 +3,7 @@
 ## Overview
 
 This project provides a WordPress website running as a Docker-based infrastructure.
-
 The stack consists of three services:
-
 * **NGINX** — receives HTTPS requests from the browser and serves as the public entry point.
 * **WordPress with PHP-FPM** — runs the WordPress application and processes PHP code.
 * **MariaDB** — stores the WordPress database.
@@ -33,30 +31,24 @@ Only NGINX is exposed to the outside. WordPress/PHP-FPM and MariaDB are used int
 ## Configuration
 
 Before starting the project from a fresh clone, create the local configuration and Docker secret files from the provided example files.
-
 The main configuration template is:
 
 ```
 srcs/.env.example
 ```
-
 Copy it to create the local `.env` file:
 
 ```bash
 cp srcs/.env.example srcs/.env
 ```
-
 The `.env` file contains non-sensitive project configuration such as:
-
 * domain name;
 * database name and user;
 * WordPress site title;
 * WordPress administrator username and email;
 * WordPress normal user username and email;
 * canonical WordPress URL.
-
 The project uses Docker secrets for passwords. The provided secret templates are:
-
 ```
 secrets/
 ├── db_password.txt.example
@@ -64,16 +56,13 @@ secrets/
 ├── wp_admin_password.txt.example
 └── wp_user_password.txt.example
 ```
-
 Create the local secret files:
-
 ```bash
 cp secrets/db_password.txt.example secrets/db_password.txt
 cp secrets/db_root_password.txt.example secrets/db_root_password.txt
 cp secrets/wp_admin_password.txt.example secrets/wp_admin_password.txt
 cp secrets/wp_user_password.txt.example secrets/wp_user_password.txt
 ```
-
 The resulting local files are:
 
 ```
@@ -86,7 +75,6 @@ secrets/
 ```
 
 The local `.env` file and secret files are excluded from Git.
-
 The project also requires a local TLS certificate and private key for NGINX. These files are environment-specific and are excluded from Git. See `DEV_DOC.md` for the certificate creation procedure.
 
 ## Starting the Project
@@ -100,7 +88,6 @@ make
 This creates the required persistent-data directories if necessary and starts the Docker Compose infrastructure in detached mode.
 
 When the WordPress container starts for the first time, the project automatically:
-
 * waits for MariaDB to become available;
 * creates `wp-config.php` if it does not already exist;
 * checks whether WordPress is already installed;
@@ -108,9 +95,7 @@ When the WordPress container starts for the first time, the project automaticall
 * creates the configured WordPress administrator account;
 * creates the configured normal/subscriber user;
 * starts PHP-FPM in the foreground.
-
 If WordPress is already installed, the installation steps are skipped and the existing installation is kept.
-
 If the Docker images need to be rebuilt, use:
 
 ```bash
@@ -138,7 +123,6 @@ make down
 ```
 
 This stops and removes the Docker Compose containers and network.
-
 The persistent WordPress and MariaDB data is normally kept when using `make down`.
 
 ## Testing Inside the VM
@@ -225,9 +209,7 @@ google-chrome \
 ```
 
 The `--host-resolver-rules` option makes Chrome resolve `tavdiiev.42.fr` to the school host's `127.0.0.1`, allowing the request to reach the VirtualBox forwarding port.
-
 The separate `--user-data-dir` creates a temporary Chrome profile for this test.
-
 The browser then accesses:
 
 ```text
@@ -245,7 +227,6 @@ https://tavdiiev.42.fr
 ```
 
 WordPress may redirect the browser from the forwarded `:8443` URL to the canonical URL without `:8443`.
-
 For browser testing through `:8443`, temporarily change **both** the WordPress `home` and `siteurl` options to:
 
 ```text
@@ -291,11 +272,8 @@ https://tavdiiev.42.fr/wp-admin/
 ```
 
 The administrator account is created automatically when WordPress is installed for the first time.
-
 Log in using the WordPress administrator username and password configured for the project.
-
 The WordPress administrator account is separate from the MariaDB database account.
-
 When testing through the school host's VirtualBox `:8443` forwarding port, browser access may redirect to the canonical URL without `:8443`. See **Browser Testing from the School Host** above.
 
 ## Credentials
@@ -344,9 +322,7 @@ WP_USER_EMAIL=[example_user2@example.com](mailto:example_user2@example.com)
 ```
 
 During the first startup, WP-CLI uses these values and the Docker secrets to install WordPress and create the two WordPress accounts automatically.
-
 The WordPress administrator password is not the same thing as the MariaDB root password or the WordPress database user's password.
-
 All secret files and the local `.env` file are excluded from the Git repository.
 
 ## Checking That WordPress Was Installed
@@ -358,7 +334,6 @@ docker exec wordpress wp core is-installed --allow-root
 ```
 
 If WordPress is installed, the command exits successfully.
-
 To check the installed WordPress version:
 
 ```bash
@@ -382,7 +357,6 @@ docker ps
 ```
 
 to see the running containers.
-
 You should see the three project services:
 
 * `nginx`
@@ -416,9 +390,7 @@ docker logs mariadb
 ```
 
 The WordPress logs can also show whether the automatic installation was performed or skipped.
-
 On a fresh WordPress data directory, the logs should contain messages indicating that WordPress was installed and the users were created.
-
 When WordPress is already installed, the installation is skipped.
 
 ### Checking the Services Individually
@@ -446,7 +418,6 @@ These commands show information such as the container state, network configurati
 ## Checking Persistent Data
 
 The project uses persistent storage for WordPress and MariaDB.
-
 The required host storage directories are:
 
 ```
@@ -456,9 +427,7 @@ The required host storage directories are:
 ```
 
 The exact `<user>` is the Linux user running the project.
-
 The project defines named Docker volumes for WordPress and MariaDB. Their storage is backed by the required host directories above.
-
 The WordPress data is mounted into the container at:
 
 ```

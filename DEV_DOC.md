@@ -3,7 +3,6 @@
 ## Overview
 
 This document explains the internal structure, configuration, build process, networking, persistence, security, and development workflow of the Inception project.
-
 The project consists of three Docker services:
 
 - **NGINX** — public HTTPS entry point.
@@ -11,7 +10,6 @@ The project consists of three Docker services:
 - **MariaDB** — database layer.
 
 The services communicate through a private Docker bridge network named `inception`.
-
 The architecture is:
 
 ```text
@@ -217,7 +215,6 @@ The files are mounted by Docker as secrets under:
 ```
 
 and the project startup scripts read them from there.
-
 A trailing newline in a secret file is harmless because the project reads the values using command substitution such as:
 
 ```sh
@@ -331,7 +328,6 @@ git status --short --ignored
 ```
 
 The real `.env` and secret files should appear as ignored files (`!!`).
-
 The certificate and private key are inside the ignored `srcs/requirements/nginx/tools/` directory, which should also appear as an ignored path (`!!`).
 
 ## School Environment and Browser Access
@@ -354,7 +350,6 @@ Therefore `8443` is not part of the project's actual NGINX or WordPress configur
 ## Testing inside the VM
 
 The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
-
 After starting the project, verify that the containers are running:
 
 ```bash
@@ -411,7 +406,7 @@ NGINX
     ▼
 WordPress
 ```
-**### Browser testing from the school host**
+### Browser testing from the school host
 
 A browser can access the project through the host-side VirtualBox forwarding port:
 
@@ -533,7 +528,6 @@ WordPress is already installed.
 ```
 
 The installation and user creation steps are skipped.
-
 This prevents duplicate users and repeated installation when the container is recreated.
 
 ### Verify installation
@@ -705,7 +699,6 @@ Builds the images and starts the services.
 ### `make down`
 
 Stops and removes the Compose containers and network.
-
 Persistent data is normally preserved.
 
 ### `make re`
@@ -721,7 +714,6 @@ Use with caution because persistent data may be affected.
 ### `make fclean`
 
 Performs more extensive Docker cleanup.
-
 Use with particular caution because persistent project data may be deleted.
 
 ## Managing Docker Compose Directly
@@ -1159,29 +1151,23 @@ removes the persistent WordPress installation.
 ## Development Workflow
 
 A normal development workflow is:
-
 ```bash
 make
 ```
-
 Check the services:
-
 ```bash
 docker ps
 ```
-
 Check WordPress:
 
 ```bash
 docker exec wordpress wp core is-installed --allow-root
 ```
-
 Check the users:
 
 ```bash
 docker exec wordpress wp user list --allow-root
 ```
-
 Check logs when needed:
 
 ```bash
@@ -1189,19 +1175,16 @@ docker logs wordpress
 docker logs nginx
 docker logs mariadb
 ```
-
 For an HTTPS test inside the VM:
 
 ```bash
 curl -kI https://tavdiiev.42.fr/
 ```
-
 For an HTTPS test from the school host:
 
 ```bash
 curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
 ```
-
 ## Important Project Constraints
 
 The project should maintain the following architecture:
