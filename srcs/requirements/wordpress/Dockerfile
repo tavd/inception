@@ -2,7 +2,7 @@ FROM alpine:3.23
 
 ARG PHP_VERSION=85
 
-RUN apk update && apk upgrade && apk add --no-cache \
+RUN apk update && apk add --no-cache \
     php${PHP_VERSION} \
     php${PHP_VERSION}-fpm \
     php${PHP_VERSION}-mysqli \
