@@ -564,6 +564,7 @@ Use with particular caution because persistent project data may be deleted.
 ## Managing Docker Compose Directly
 
 The project can also be managed directly with Docker Compose.
+
 Start:
 ```bash
 docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d
