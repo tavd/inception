@@ -2,7 +2,8 @@ NAME = inception
 
 all:
 	@printf "Launch configuration $(NAME)...\n"
-	@srcs/requirements/wordpress/tools/make_dir.sh
+	@mkdir -p /home/tavd/data/mariadb
+	@mkdir -p /home/tavd/data/wordpress
 	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d
 
 build:
@@ -19,16 +20,15 @@ re: down
 	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
 
 clean: down
-    @printf "Cleaning configuration $(NAME)...\n"
-    @docker system prune -a
-    @sudo find ~/data/wordpress ~/data/mariadb -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+	@printf "Cleaning configuration $(NAME)...\n"
+	@docker system prune -a
 
 fclean:
-    @printf "Total clean of all configurations docker\n"
-    @docker stop $$(docker ps -qa)
-    @docker system prune --all --force --volumes
-    @docker network prune --force
-    @docker volume prune --force
-    @sudo find ~/data/wordpress ~/data/mariadb -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-
+	@printf "Total clean of all configurations docker\n"
+	@docker stop $$(docker ps -qa)
+	@docker system prune --all --force --volumes
+	@docker network prune --force
+	@docker volume prune --force
+	sudo rm -rf /home/tavd/data/mariadb
+	sudo rm -rf /home/tavd/data/wordpress
 .PHONY: all build down re clean fclean
