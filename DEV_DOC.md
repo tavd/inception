@@ -188,45 +188,57 @@ Command substitution removes trailing newline characters.
 ### 3. Create the local TLS certificate and private key
 
 The NGINX configuration requires these two files:
+
 ```text
 srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
 srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
-These files are local environment-specific files and are excluded from Git because `.gitignore` ignores `*.crt` and `*.key` files.
-Therefore, a fresh Git clone does not contain the certificate or private key.
-Create the directory if it does not already exist:
-```bash
-mkdir -p srcs/requirements/nginx/tools
-```
-The project uses `mkcert` to create a local development certificate.
-Check that `mkcert` is installed:
+These files are local environment-specific files and are excluded from Git because `.gitignore` ignores `*.crt` and `*.key` files. Therefore, a fresh Git clone does not contain the certificate or private key.
+The project uses `mkcert` to generate the local development certificate automatically.
+First, make sure that `mkcert` is installed:
 ```bash
 mkcert --version
 ```
-Then change to the NGINX tools directory:
-```bash
-cd srcs/requirements/nginx/tools
-```
-Generate a certificate for the domain used by the project:
-```bash
-mkcert tavdiiev.42.fr
-```
-`mkcert` normally creates two files:
+The certificate is generated automatically by the following script:
 ```text
-tavdiiev.42.fr.pem
-tavdiiev.42.fr-key.pem
+srcs/requirements/nginx/tools/generate_cert.sh
 ```
-Rename them to the filenames expected by the NGINX configuration:
-```bash
-mv tavdiiev.42.fr.pem tavdiiev.42.fr.crt
-mv tavdiiev.42.fr-key.pem tavdiiev.42.fr.key
-```
-The directory should then contain:
+The script determines its own directory, so it works regardless of where the project has been cloned.
+When the certificate or private key is missing, the script generates:
 ```text
-tavdiiev.42.fr.crt
-tavdiiev.42.fr.key
+srcs/requirements/nginx/tools/tavdiiev.42.fr.crt
+srcs/requirements/nginx/tools/tavdiiev.42.fr.key
 ```
-The certificate and private key are mounted into the NGINX container by Docker Compose:
+The certificate is generated for the following names:
+```text
+tavdiiev.42.fr
+www.tavdiiev.42.fr
+localhost
+127.0.0.1
+::1
+```
+The script also sets the appropriate permissions:
+```text
+certificate: 644
+private key: 600
+```
+The private key is therefore readable only by its owner.
+The certificate generation script is executed automatically by the `build` target in the `Makefile`:
+```make
+build:
+	@printf "Building configuration $(NAME)...\n"
+	@srcs/requirements/wordpress/tools/make_dir.sh
+	@srcs/requirements/nginx/tools/generate_cert.sh
+	@docker-compose -f ./srcs/docker-compose.yml --env-file srcs/.env up -d --build
+	@sudo chmod 755 /home/${USER}/data/mariadb
+```
+The script is only executed during `make build`.
+If the certificate and private key already exist, the script does not generate them again. It prints:
+```text
+SSL certificate already exists.
+```
+This makes the script safe to run every time `make build` is used.
+The generated certificate and private key are mounted into the NGINX container by Docker Compose:
 ```yaml
 - ./requirements/nginx/tools:/etc/nginx/ssl/
 ```
@@ -235,7 +247,14 @@ Inside the container, NGINX therefore uses:
 /etc/nginx/ssl/tavdiiev.42.fr.crt
 /etc/nginx/ssl/tavdiiev.42.fr.key
 ```
-These files must exist locally before starting the containers because NGINX needs them to configure HTTPS.
+The certificate and private key do not need to be manually created or renamed.
+Running:
+
+```bash
+make build
+```
+
+automatically creates the certificate and private key when they are missing, and then builds and starts the Docker services.
 
 ### 4. Verify the local files before building and starting
 
