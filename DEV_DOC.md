@@ -420,6 +420,7 @@ NGINX
     ▼
 WordPress
 ```
+
 ### Browser testing from the school host
 
 A browser can access the project through the host-side VirtualBox forwarding port:
