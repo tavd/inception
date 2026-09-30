@@ -384,7 +384,7 @@ https://tavdiiev.42.fr
 ```
 The procedures for starting and testing the project inside the VM are described in DEV_DOC.md.
 
-**#### Browser testing from the school host**
+#### Browser testing from the school host
 
 The site can be accessed from the school host through the VirtualBox forwarding port:
 ```text
