@@ -80,6 +80,24 @@ The development environment requires:
 * A Linux environment capable of running Docker
 The current project uses Alpine Linux 3.23 as the base image for all three services.
 
+The project uses **Alpine Linux 3.23** as the base image for all three services:
+
+```dockerfile
+FROM alpine:3.23
+```
+
+Alpine 3.23 is the penultimate stable release branch. The official Alpine release information can be checked here:
+
+[Alpine Linux release branches](https://alpinelinux.org/releases/)
+
+The three service Dockerfiles use this base image:
+
+```text
+srcs/requirements/nginx/Dockerfile
+srcs/requirements/wordpress/Dockerfile
+srcs/requirements/mariadb/Dockerfile
+```
+
 ## Setting Up Environment From Scratch
 
 After cloning the repository, the local environment-specific files must be created before the first build.
