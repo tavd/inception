@@ -36,6 +36,6 @@ COPY ./requirements/wordpress/conf/wp-config-create.sh /usr/local/bin/wp-config-
 COPY ./requirements/wordpress/tools/wp.sh /usr/local/bin/wp.sh
 
 RUN chmod +x /usr/local/bin/wp-config-create.sh /usr/local/bin/wp.sh && \
-    chmod -R 0777 wp-content/
+    chmod -R 777 wp-content/
 EXPOSE 9000
 CMD ["/usr/local/bin/wp.sh"]
