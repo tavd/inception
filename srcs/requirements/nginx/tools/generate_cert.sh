@@ -11,7 +11,7 @@ KEY_FILE="${CERT_DIR}/tavdiiev.42.fr.key"
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
     echo "Generating SSL certificate..."
     mkcert \
-    # put the generated certificate and key in these files
+        # put the generated certificate and key in these files
         -cert-file "$CERT_FILE" \
         -key-file "$KEY_FILE" \
         # the names/addresses that the certificate is valid for
