@@ -35,6 +35,7 @@ RUN wget https://wordpress.org/latest.zip && \
 COPY ./requirements/wordpress/conf/wp-config-create.sh /usr/local/bin/wp-config-create.sh
 COPY ./requirements/wordpress/tools/wp.sh /usr/local/bin/wp.sh
 
+# Make startup scripts executable and allow the PHP-FPM user to write to wp-content
 RUN chmod +x /usr/local/bin/wp-config-create.sh /usr/local/bin/wp.sh && \
     chmod -R 777 wp-content/
 EXPOSE 9000

@@ -4,9 +4,11 @@ set -e
 
 if [ ! -f "/var/www/wp-config.php" ]; then
 
-    DB_PASS="$(cat /run/secrets/db_password)"
+# Read the database password from the Docker secret
+DB_PASS="$(cat /run/secrets/db_password)"
 
-    cat << EOF > /var/www/wp-config.php
+# Generate wp-config.php with the database connection settings WordPress will use to connect to MariaDB
+cat << EOF > /var/www/wp-config.php
 <?php
 define( 'DB_NAME', '${DB_NAME}' );
 define( 'DB_USER', '${DB_USER}' );

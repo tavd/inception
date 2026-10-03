@@ -2,9 +2,11 @@
 
 set -e
 
+# Read the database passwords from Docker secrets
 DB_PASS="$(cat /run/secrets/db_password)"
 DB_ROOT="$(cat /run/secrets/db_root_password)"
 
+# Initialize MariaDB data directory (/var/lib/mysql)
 if [ ! -d "/var/lib/mysql/mysql" ]; then
     mysql_install_db \
         --basedir=/usr \
@@ -12,6 +14,7 @@ if [ ! -d "/var/lib/mysql/mysql" ]; then
         --user=mysql
 fi
 
+# Create and configure the database and users on the first startup
 if [ ! -d "/var/lib/mysql/${DB_NAME}" ]; then
 
     mysqld --user=mysql --bootstrap << EOF
