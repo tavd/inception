@@ -766,19 +766,6 @@ mariadb
 ```
 as the database host.
 
-### School host HTTPS test
-
-From the school host:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-A successful response should be similar to:
-```text
-HTTP/1.1 200 OK
-Server: nginx
-```
-This tests the host-to-VM forwarded connection without changing the canonical WordPress URL.
-
 ## Cleaning Project
 
 Do not use destructive cleanup commands unless intentionally resetting the project.
