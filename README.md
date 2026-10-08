@@ -116,8 +116,6 @@ The configured WordPress URL is:
 ```text
 https://tavdiiev.42.fr
 ```
-In the school virtual-machine environment, VirtualBox forwards host port 8443 to the VM's port 443 for testing. Port 8443 is only a host-side forwarding port and is not part of the project's configured WordPress URL.
-
 ### Base images
 
 The containers use Alpine Linux 3.23 as the base image.
@@ -281,6 +279,7 @@ The following software is required:
 * Bash
 * mkcert
 * A Linux environment capable of running Docker
+* A graphical desktop environment in the VM for browser-based testing
 
 ### Clone the repository
 
@@ -371,40 +370,6 @@ The public entry point is NGINX over HTTPS:
 https://tavdiiev.42.fr/
 ```
 Only NGINX is exposed through port 443.
-
-### School virtual-machine environment
-
-When the project is running inside the school Debian virtual machine, VirtualBox forwards:
-```text
-Host 127.0.0.1:8443 → VM port 443
-```
-The project itself still uses HTTPS port 443, and the configured WordPress URL remains:
-```text
-https://tavdiiev.42.fr
-```
-The procedures for starting and testing the project inside the VM are described in DEV_DOC.md.
-
-#### Browser testing from the school host
-
-The site can be accessed from the school host through the VirtualBox forwarding port:
-```text
-https://tavdiiev.42.fr:8443/
-```
-If the school host cannot resolve `tavdiiev.42.fr`, use the Chrome setup described in `DEV_DOC.md`.
-When testing through `:8443`, WordPress may redirect to the canonical URL without the forwarding port. For full browser testing through `:8443`, including `/wp-admin/` and the WordPress login page, temporarily set both the WordPress `home` and `siteurl` options to include `:8443`. See `DEV_DOC.md` for the exact procedure.
-After testing, restore both options to the canonical URL:
-```text
-https://tavdiiev.42.fr
-```
-Do not add `:8443` to `WP_URL` in the project's final configuration.
-
-#### Command-line testing from the school host
-
-For a direct HTTP response check, use:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-A successful HTTP/1.1 200 OK response confirms that the request reaches NGINX through the forwarded port and is served successfully.
 
 ### Stop the infrastructure
 ```bash

@@ -106,6 +106,7 @@ make down
 ```
 This stops and removes the Docker Compose containers and network.
 The persistent WordPress and MariaDB data is normally kept when using `make down`.
+
 ## Testing Inside the VM
 
 The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
@@ -129,65 +130,6 @@ curl -kI https://tavdiiev.42.fr/
 ```
 A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
 
-## Testing from the School Host
-
-In the school virtual-machine environment, VirtualBox forwards:
-```
-Host 127.0.0.1:8443
-     │
-     ▼
- VM port 443
-     │
-     ▼
-   NGINX
-```
-Therefore, `8443` is only the local VirtualBox forwarding port. It is not part of the project's actual NGINX or WordPress configuration.
-
-The project itself uses HTTPS port `443`, and the canonical WordPress URL remains:
-```
-https://tavdiiev.42.fr
-```
-For a command-line test from the school host, use:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-This sends the request to the school host's forwarded port and supplies the expected hostname through the `Host` header.
-
-## Browser Testing from the School Host
-
-The browser URL used through the school host's VirtualBox forwarding is:
-```text
-https://tavdiiev.42.fr:8443/
-```
-If the school host cannot resolve `tavdiiev.42.fr` normally, Chrome can be started with a temporary host-resolution rule:
-```bash
-google-chrome \
-    --user-data-dir=/tmp/chrome-test \
-    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
-```
-The `--host-resolver-rules` option makes Chrome resolve `tavdiiev.42.fr` to the school host's `127.0.0.1`, allowing the request to reach the VirtualBox forwarding port.
-The separate `--user-data-dir` creates a temporary Chrome profile for this test.
-The browser then accesses:
-```text
-https://tavdiiev.42.fr:8443/
-```
-Because WordPress normally uses the canonical URL:
-```text
-https://tavdiiev.42.fr
-```
-WordPress may redirect the browser from the forwarded `:8443` URL to the canonical URL without `:8443`.
-For browser testing through `:8443`, temporarily change **both** the WordPress `home` and `siteurl` options to:
-```text
-https://tavdiiev.42.fr:8443
-```
-This is required for full browser testing from the school host, including the public site, `/wp-admin/`, and the WordPress login page.
-The `home` option controls the public site URL, while `siteurl` is also used for WordPress administration and login URLs. Therefore, changing only `home` is sufficient for testing the public homepage, but not for the complete WordPress admin/login flow.
-After testing, restore **both** options to:
-```text
-https://tavdiiev.42.fr
-```
-Do not add `:8443` to `WP_URL` in the project's final configuration. `:8443` is only the school host's VirtualBox forwarding port; the project itself uses HTTPS on port 443.
-
 ## Accessing the Website
 
 The public website is served through NGINX using HTTPS.
@@ -205,11 +147,9 @@ The WordPress administration panel is available at:
 ```
 https://tavdiiev.42.fr/wp-admin/
 ```
-
 The administrator account is created automatically when WordPress is installed for the first time.
 Log in using the WordPress administrator username and password configured for the project.
 The WordPress administrator account is separate from the MariaDB database account.
-When testing through the school host's VirtualBox `:8443` forwarding port, browser access may redirect to the canonical URL without `:8443`. See **Browser Testing from the School Host** above.
 
 ## Credentials
 
@@ -239,9 +179,9 @@ The usernames and other WordPress settings are configured through the project's 
 For example:
 ```
 WP_ADMIN_USER=example_user
-WP_ADMIN_EMAIL=[example_user@example.com](mailto:example_user@example.com)
+WP_ADMIN_EMAIL=example_user@example.com
 WP_USER=example_user2
-WP_USER_EMAIL=[example_user2@example.com](mailto:example_user2@example.com)
+WP_USER_EMAIL=example_user2@example.com
 ```
 During the first startup, WP-CLI uses these values and the Docker secrets to install WordPress and create the two WordPress accounts automatically.
 The WordPress administrator password is not the same thing as the MariaDB root password or the WordPress database user's password.
@@ -361,9 +301,6 @@ Removing the MariaDB data can result in losing the WordPress database and its us
 | WordPress logs               | `docker logs wordpress`                                                                               |
 | MariaDB logs                 | `docker logs mariadb`                                                                                 |
 | VM HTTPS test                | `curl -kI https://tavdiiev.42.fr/`                                                                    |
-| School host HTTPS test       | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/`                                          |
 | Website                      | `https://tavdiiev.42.fr/`                                                                             |
 | WordPress admin              | `https://tavdiiev.42.fr/wp-admin/`                                                                    |
-| School host browser          | `https://tavdiiev.42.fr:8443/`                                                                        |
-| School host Chrome test      | `google-chrome --user-data-dir=/tmp/chrome-test --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"` |
-| ```                          |                                                                                                       |
+```
