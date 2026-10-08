@@ -78,7 +78,7 @@ The development environment requires:
 * Bash
 * mkcert
 * A Linux environment capable of running Docker
-The current project uses Alpine Linux 3.23 as the base image for all three services.
+* A graphical desktop environment in the VM for browser-based testing
 
 The project uses **Alpine Linux 3.23** as the base image for all three services:
 
@@ -376,96 +376,34 @@ List users:
 ```bash
 docker exec wordpress wp user list --allow-root
 ```
-
 ## Testing inside the VM
 
-The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
 After starting the project, verify that the containers are running:
-```bash
+
 docker ps
-```
+
 The expected containers are:
-```text
+
 nginx
 wordpress
 mariadb
-```
-The VM resolves the domain locally through `/etc/hosts`:
-```text
+
+The VM resolves the project domain locally through `/etc/hosts`:
+
 127.0.0.1    localhost tavdiiev.42.fr
-```
-Then test the HTTPS entry point directly on the VM:
+
+The HTTPS entry point can then be tested directly from the VM:
+
 ```bash
 curl -kI https://tavdiiev.42.fr/
 ```
-A successful response should indicate that the request reaches NGINX on port 443 and is handled by the WordPress application.
+A successful response such as `HTTP/1.1 200 OK` confirms that the request reaches NGINX on port 443 and is handled by the WordPress application.
 
-## School Environment and Browser Access
+The site can also be opened in a browser running inside the VM using:
 
-The project itself uses:
-```text
-NGINX :443
-WP_URL=https://tavdiiev.42.fr
-```
-In the school VM setup, VirtualBox forwards:
-```text
-Host 127.0.0.1:8443 → VM 443
-```
-Therefore `8443` is not part of the project's actual NGINX or WordPress configuration.
-
-### Testing from the school host
-
-When testing from the school host, the recommended test is:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
-A successful response such as:
-```text
-HTTP/1.1 200 OK
-```
-confirms the path:
-```text
-School host
-    │
-    │ 127.0.0.1:8443
-    ▼
-VirtualBox
-    │
-    │ VM :443
-    ▼
-NGINX
-    │
-    ▼
-WordPress
-```
-
-### Browser testing from the school host
-
-A browser can access the project through the host-side VirtualBox forwarding port:
-```text
-https://tavdiiev.42.fr:8443/
-```
-If the school host cannot resolve `tavdiiev.42.fr`, start a separate Chrome instance with:
-```bash
-google-chrome \
-    --user-data-dir=/tmp/chrome-test \
-    --host-resolver-rules="MAP tavdiiev.42.fr 127.0.0.1"
-```
-`--user-data-dir=/tmp/chrome-test` uses a separate temporary Chrome profile, while `--host-resolver-rules` makes `tavdiiev.42.fr` resolve to `127.0.0.1` for this Chrome instance.
-When accessing the site through `:8443`, WordPress may redirect to the canonical URL without the forwarding port because the `home` and `siteurl` options are normally configured as:
-```text
-https://tavdiiev.42.fr
-```
-For browser testing through `:8443`, temporarily set **both** the `home` and `siteurl` options to:
-```text
-https://tavdiiev.42.fr:8443
-```
-This is necessary when testing the full WordPress site from the school host, including `/wp-admin/` and the WordPress login page. The `siteurl` option is used for WordPress administration and login URLs, so changing only `home` is sufficient for the public site but not for the complete admin/login flow.
-After testing, restore **both** `home` and `siteurl` to:
-```text
-https://tavdiiev.42.fr
-```
-
+```test
+https://tavdiiev.42.fr/
+````
 ## Checking Docker Network
 
 The project uses:
@@ -845,30 +783,6 @@ Server: nginx
 ```
 This tests the host-to-VM forwarded connection without changing the canonical WordPress URL.
 
-### Browser redirects from port 8443
-
-This can happen because WordPress is configured with:
-```text
-https://tavdiiev.42.fr
-```
-as its canonical URL, while the browser is accessing the site through the host-side forwarding port:
-```text
-https://tavdiiev.42.fr:8443
-```
-For browser testing through `:8443`, temporarily set both the home and siteurl options to:
-```text
-https://tavdiiev.42.fr:8443
-```
-This allows WordPress to generate links and redirects using the host-side forwarding port during the browser test.
-
-If the school host cannot resolve tavdiiev.42.fr, use the Chrome command described in the browser testing section.
-
-After testing, restore both home and siteurl to the canonical URL:
-```text
-https://tavdiiev.42.fr
-```
-Do not permanently change WP_URL to include `:8443`. The `:8443` port is only used by the school host's VirtualBox port forwarding and is not part of the project's canonical WordPress URL.
-
 ## Cleaning Project
 
 Do not use destructive cleanup commands unless intentionally resetting the project.
@@ -921,10 +835,6 @@ For an HTTPS test inside the VM:
 ```bash
 curl -kI https://tavdiiev.42.fr/
 ```
-For an HTTPS test from the school host:
-```bash
-curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/
-```
 ## Important Project Constraints
 
 The project should maintain the following architecture:
@@ -945,7 +855,6 @@ The project should maintain the following architecture:
 * Do not use `latest` as a base-image tag.
 * Do not expose MariaDB or PHP-FPM through published host ports.
 * Keep the canonical WordPress URL as `https://tavdiiev.42.fr`.
-* Do not add the school-only VirtualBox port `8443` to the final WordPress URL.
 
 ## Quick Reference
 
@@ -965,4 +874,3 @@ The project should maintain the following architecture:
 | Check WordPress version      | `docker exec wordpress wp core version --allow-root`         |
 | List WordPress users         | `docker exec wordpress wp user list --allow-root`            |
 | Test HTTPS from VM           | `curl -kI https://tavdiiev.42.fr/`                           |
-| Test HTTPS from school host  | `curl -kI -H "Host: tavdiiev.42.fr" https://127.0.0.1:8443/` |
