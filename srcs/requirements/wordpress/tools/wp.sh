@@ -2,7 +2,7 @@
 
 set -e
 
-/usr/local/bin/wp-config-create.sh
+/usr/local/bin/create_config.sh
 
 # Wait until MariaDB is ready to accept connections
 until php85 -r '

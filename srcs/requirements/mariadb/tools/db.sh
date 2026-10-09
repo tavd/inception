@@ -2,6 +2,6 @@
 
 set -e
 
-/usr/local/bin/create_db.sh
+/usr/local/bin/setup_db.sh
 
 exec "$@"
