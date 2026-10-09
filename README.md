@@ -195,13 +195,14 @@ WordPress
 ```
 A host network would instead make a container use the host's network stack directly.
 
-| **Docker Network**                                      | **Host Network**                                              |
-| ------------------------------------------------------- | ------------------------------------------------------------- |
-| Provides network isolation                              | Shares the host network namespace                             |
-| Containers receive their own network identity           | Container uses host networking                                |
-| Services can communicate using Docker DNS/service names | Docker service-name networking is not used in the same way    |
-| Ports can be explicitly published                       | Container ports are directly associated with the host network |
-| Better separation between services                      | Less network isolation                                        |
+| **Docker bridge network**                                               | **Host network**                                                     |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Containers use a Docker-managed network                                 | Containers use the host's network namespace                          |
+| Provides network isolation between Docker networks and the host network | Little/no network isolation from the host network                    |
+| Containers get their own network interfaces/IPs on the Docker network   | Containers do not get a separate network namespace in the normal way |
+| Docker DNS allows service-name communication                            | Docker service-name DNS networking is not provided in the same way   |
+| Ports can be explicitly published with `ports:`                         | Docker port publishing is not used in the same way                   |
+| Good for isolated multi-container applications                          | Useful when a container needs to use the host network directly       |
 
 The Docker bridge network was chosen because the services only need to communicate with each other and should not require direct access to the host network.
 Only NGINX needs to be accessible from outside the Docker network.
