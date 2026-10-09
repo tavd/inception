@@ -109,7 +109,6 @@ The persistent WordPress and MariaDB data is normally kept when using `make down
 
 ## Testing Inside the VM
 
-The project can first be tested directly from inside the Debian VM, without using the VirtualBox host-side forwarding port.
 After starting the project, verify that the containers are running:
 ```bash
 docker ps
@@ -303,4 +302,3 @@ Removing the MariaDB data can result in losing the WordPress database and its us
 | VM HTTPS test                | `curl -kI https://tavdiiev.42.fr/`                                                                    |
 | Website                      | `https://tavdiiev.42.fr/`                                                                             |
 | WordPress admin              | `https://tavdiiev.42.fr/wp-admin/`                                                                    |
-```

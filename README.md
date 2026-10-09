@@ -451,16 +451,20 @@ This allows the containers to be recreated without repeating the complete databa
 
 ### Official documentation
 
-* Docker documentation: https://docs.docker.com/
-* Docker Compose documentation: https://docs.docker.com/compose/
-* Docker networking documentation: https://docs.docker.com/engine/network/
-* Docker volumes documentation: https://docs.docker.com/engine/storage/volumes/
-* Docker secrets documentation: https://docs.docker.com/engine/swarm/secrets/
-* NGINX documentation: https://nginx.org/en/docs/
-* PHP-FPM documentation: https://www.php.net/manual/en/install.fpm.php
-* WordPress documentation: https://developer.wordpress.org/
-* MariaDB documentation: https://mariadb.com/docs/
-* Alpine Linux documentation: https://docs.alpinelinux.org/
+* Docker documentation: [https://docs.docker.com/](https://docs.docker.com/)
+* Docker Compose documentation: [https://docs.docker.com/compose/](https://docs.docker.com/compose/)
+* Docker networking documentation: [https://docs.docker.com/engine/network/](https://docs.docker.com/engine/network/)
+* Docker volumes documentation: [https://docs.docker.com/engine/storage/volumes/](https://docs.docker.com/engine/storage/volumes/)
+* Docker Compose secrets documentation: [https://docs.docker.com/compose/how-tos/use-secrets/](https://docs.docker.com/compose/how-tos/use-secrets/)
+* NGINX documentation: [https://nginx.org/en/docs/](https://nginx.org/en/docs/)
+* PHP-FPM documentation: [https://www.php.net/manual/en/install.fpm.php](https://www.php.net/manual/en/install.fpm.php)
+* WordPress documentation: [https://developer.wordpress.org/](https://developer.wordpress.org/)
+* MariaDB documentation: [https://mariadb.com/docs/](https://mariadb.com/docs/)
+* Alpine Linux documentation: [https://docs.alpinelinux.org/](https://docs.alpinelinux.org/)
+
+### Tutorials and learning resources
+
+* Codesshaman Inception guide: [GitHub repository](https://github.com/codesshaman/inception) — used as a reference for learning and implementing parts of this project.
 
 ### Additional references
 

@@ -3,15 +3,15 @@ FROM alpine:3.23
 RUN apk update && apk add --no-cache mariadb mariadb-client
 
 # Create the MariaDB runtime directory and allow the MariaDB process to use it
+# Configure MariaDB to listen on all network interfaces
+# Enable network connections by disabling MariaDB's skip-networking option
 RUN mkdir -p /var/run/mysqld && \
     chmod 777 /var/run/mysqld && \
-    # Configure MariaDB to listen on all network interfaces
     { \
         echo '[mysqld]'; \
         echo 'bind-address=0.0.0.0'; \
     } | tee /etc/my.cnf.d/docker.cnf && \
     sed -i "s|skip-networking|skip-networking=0|g" \
-    # Enable network connections by disabling MariaDB's skip-networking option
     /etc/my.cnf.d/mariadb-server.cnf
 
 COPY requirements/mariadb/conf/create_db.sh /usr/local/bin/create_db.sh
