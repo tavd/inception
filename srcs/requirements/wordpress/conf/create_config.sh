@@ -5,14 +5,14 @@ set -e
 CONFIG_FILE="/var/www/wp-config.php"
 DB_PASSWORD_FILE="/run/secrets/db_password"
 
-# Create the WordPress configuration only if it does not exist
+# Configure WordPress only if CONFIG_FILE doesn't exist
 if [ ! -f "$CONFIG_FILE" ]; then
 
-    # Check that the required database settings are available
+    # If the variable is unset or empty, stop with the error message
     : "${DB_NAME:?DB_NAME environment variable is required}"
     : "${DB_USER:?DB_USER environment variable is required}"
 
-    # Check that the database password secret can be read
+    # Check if this file exists and is readable (-r)
     if [ ! -r "$DB_PASSWORD_FILE" ]; then
         echo "Error: database password secret is missing or unreadable." >&2
         exit 1
@@ -20,7 +20,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
 
     DB_PASS="$(cat "$DB_PASSWORD_FILE")"
 
-    # Generate the WordPress database configuration.
+    # Generate the WordPress database config file
     cat > "$CONFIG_FILE" << EOF
 <?php
 define( 'DB_NAME', '${DB_NAME}' );
