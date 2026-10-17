@@ -22,13 +22,13 @@ USE mysql;
 
 FLUSH PRIVILEGES;
 
-DELETE FROM mysql.user WHERE User='';
+DELETE FROM user WHERE User='';
 
 DROP DATABASE IF EXISTS test;
 
-DELETE FROM mysql.db WHERE Db='test';
+DELETE FROM db WHERE Db='test';
 
-DELETE FROM mysql.user
+DELETE FROM user
 WHERE User='root'
   AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 

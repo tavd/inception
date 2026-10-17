@@ -22,4 +22,4 @@ RUN chmod +x /usr/local/bin/setup_db.sh /usr/local/bin/db.sh
 EXPOSE 3306
 USER mysql
 ENTRYPOINT ["/usr/local/bin/db.sh"]
-CMD ["/usr/bin/mysqld", "--skip-log-error"]
+CMD ["mysqld", "--skip-log-error"]
